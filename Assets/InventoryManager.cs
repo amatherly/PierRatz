@@ -29,9 +29,9 @@ public class InventoryManager : MonoBehaviour
     {
         if (myCurrentSize < MAXSIZE)
         {
-            if (!myInventory.Contains(theItem.name))
+            if (!myInventory.Contains(theItem.myName))
             {
-                myInventory.Add(theItem.name);
+                myInventory.Add(theItem.myName);
                 myCurrentSize++;
             }
             theItem.myCount++;
@@ -42,18 +42,21 @@ public class InventoryManager : MonoBehaviour
         }
     }
 
-    public void removeFromInventory(Item theItem)
+    public Item removeFromInventory(Item theItem)
     {
         if (theItem.myCount > 0)
         {
             myCurrentSize--;
-            _ = myInventory.Remove(theItem.name);
+            _ = myInventory.Remove(theItem.myName);
             theItem.myCount--;
         }
         if (theItem.myIsThrowable)
         {
             myCountText.SetText(theItem.myCount.ToString());
+            return myCurrentThrowable;
         }
+        else return null;
     }
+
 
 }

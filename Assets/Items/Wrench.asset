@@ -15,5 +15,7 @@ MonoBehaviour:
   myName: wrench
   myDescription: im a wrench
   myType: 0
-  myCount: 12
+  myCount: 34
   myIsThrowable: 1
+  myThrownObjectPrefab: {fileID: 1727974784541635641, guid: 9439b0a2824275645976f219e7b0cb8f, type: 3}
+  myThrowForce: 100

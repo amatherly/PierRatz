@@ -102,7 +102,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
 --- !u!136 &1727974785019788794
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -133,10 +133,8 @@ MonoBehaviour:
   mySpeed: 2
   myPickupRange: 1
   myPickupSound: {fileID: 0}
-  myPlayerTransform: {fileID: 0}
   myRigidbody: {fileID: 1727974785019788793}
-  myThrownObjectPrefab: {fileID: 1727974784541635641}
-  myThrowForce: 10000
+  myPlayerController: {fileID: 0}
   myAudioSource: {fileID: 0}
   myInventory: {fileID: 0}
 --- !u!108 &6309419603328729444
