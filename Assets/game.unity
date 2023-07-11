@@ -545,7 +545,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 129855032}
-  m_LocalRotation: {x: 0.0842082, y: 0.3779437, z: -0.03454298, w: 0.92134374}
+  m_LocalRotation: {x: 0.0842082, y: 0.3779437, z: -0.034542978, w: 0.9213438}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -1418,16 +1418,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mySkateSpeed: 10
-  myAnimator: {fileID: 329031388}
+  myAnimator: {fileID: 0}
   myCameraTransform: {fileID: 1745396672}
   myCapsuleTransform: {fileID: 329031380}
   myCharacterController: {fileID: 329031381}
   myMaximumSpeed: 10
-  myOriginalStepOffset: 1
+  myOriginalStepOffset: 0
   mySkateboard: {fileID: 919132148434351505}
   myThrowForce: 1000
   myIsThrowing: 0
   myPushCounter: 0
+  myCurrentThrowable: {fileID: 0}
   myInventoryManager: {fileID: 2000178947}
 --- !u!23 &329031392
 MeshRenderer:
@@ -3410,7 +3411,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1618173486}
-  m_LocalRotation: {x: 0.06747982, y: 0.3785082, z: -0.027680855, w: 0.92271984}
+  m_LocalRotation: {x: 0.06747983, y: 0.37850818, z: -0.02768085, w: 0.92271984}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -4508,7 +4509,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2138105002}
-  m_LocalRotation: {x: 0.10095304, y: 0.37725288, z: -0.041411877, w: 0.9196596}
+  m_LocalRotation: {x: 0.10095304, y: 0.37725285, z: -0.041411866, w: 0.9196597}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0

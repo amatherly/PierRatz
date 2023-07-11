@@ -1,7 +1,8 @@
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "Item", menuName = "Items/Item")]
-public class Item : ScriptableObject
+[System.Serializable]
+public class Item
 {
     public string myName = "Item";
 
@@ -10,6 +11,8 @@ public class Item : ScriptableObject
     public bool myIsThrowable;
     public GameObject myThrownObjectPrefab;
     public float myThrowForce = 100;
+
+
 
 
     public Item(string name, ItemType type)
