@@ -545,7 +545,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 129855032}
-  m_LocalRotation: {x: 0.084208176, y: 0.37794363, z: -0.034542978, w: 0.9213438}
+  m_LocalRotation: {x: 0.084208176, y: 0.37794372, z: -0.034542978, w: 0.92134374}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -1418,24 +1418,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0eec1a56bbaf9334992885865e45532d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mySkateSpeed: 10
   myAnimator: {fileID: 329031388}
   myCameraTransform: {fileID: 1745396672}
   myCapsuleTransform: {fileID: 329031380}
   myCharacterController: {fileID: 329031381}
-  myMaximumSpeed: 10
   myOriginalStepOffset: 0
   mySkateboard: {fileID: 919132148434351505}
   myThrowForce: 1000
   myIsThrowing: 0
   myPushCounter: 0
-  myCurrentThrowable:
-    myName: 
-    myType: 0
-    myCount: 0
-    myIsThrowable: 1
-    myThrownObjectPrefab: {fileID: 1727974784541635641, guid: 9439b0a2824275645976f219e7b0cb8f, type: 3}
-    myThrowForce: 0
+  myCurrentThrowable: {fileID: 11400000, guid: e5dbf902753e35d43965e9047c9461d6, type: 2}
   myInventoryManager: {fileID: 2000178947}
 --- !u!23 &329031392
 MeshRenderer:
@@ -4446,13 +4438,7 @@ MonoBehaviour:
   - 
   myCountText: {fileID: 497299040}
   myPlayerTransform: {fileID: 329031380}
-  myCurrentThrowable:
-    myName: 
-    myType: 0
-    myCount: 0
-    myIsThrowable: 0
-    myThrownObjectPrefab: {fileID: 0}
-    myThrowForce: 0
+  myCurrentThrowable: {fileID: 0}
 --- !u!4 &2000178948
 Transform:
   m_ObjectHideFlags: 0
@@ -4604,7 +4590,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2138105002}
-  m_LocalRotation: {x: 0.10773131, y: 0.37693718, z: -0.044192385, w: 0.9188903}
+  m_LocalRotation: {x: 0.107731335, y: 0.37693727, z: -0.044192396, w: 0.9188903}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0

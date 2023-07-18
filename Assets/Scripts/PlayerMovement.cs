@@ -1,4 +1,3 @@
-using UnityEditor;
 using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
@@ -6,14 +5,14 @@ public class PlayerMovement : MonoBehaviour
 
     #region Fields
     [SerializeField]
-    private float mySkateSpeed = 18;
-    private float myWalkSpeed = 7;
+    private readonly float mySkateSpeed = 18;
+    private readonly float myWalkSpeed = 7;
     public Animator myAnimator;
     public Transform myCameraTransform;
     public Transform myCapsuleTransform;
     public CharacterController myCharacterController;
-    private bool myIsSkating = false;
-    private float InputMagnitude;
+    private readonly bool myIsSkating = false;
+    private float myInputMagnitude;
 
 
     [SerializeField]
@@ -24,15 +23,17 @@ public class PlayerMovement : MonoBehaviour
 
 
     [SerializeField]
-    private float myMaximumSpeed = 10;
+    private readonly float myMaximumSpeed = 10;
     public float myOriginalStepOffset;
-    private float myRotationSpeed = 1000;
+    private readonly float myRotationSpeed = 1000;
+
+
     [SerializeField]
     public GameObject mySkateboard;
     private float mySpeedMultiplier = 0.5f;
     private float myYSpeed;
     public float myThrowForce = 1000f;
-    private float mySlope = 1f;
+    private readonly float mySlope = 1f;
     public bool myIsThrowing = false;
     public float myPushCounter = 0;
     public Item myCurrentThrowable;
@@ -46,7 +47,6 @@ public class PlayerMovement : MonoBehaviour
         myAnimator = GetComponent<Animator>();
         myCharacterController = GetComponent<CharacterController>();
         myOriginalStepOffset = myCharacterController.stepOffset;
-        myCurrentThrowable = myInventoryManager.myCurrentThrowable;
     }
 
     // Update is called once per frame
@@ -56,7 +56,9 @@ public class PlayerMovement : MonoBehaviour
         myYSpeed += Physics.gravity.y * Time.deltaTime * 10;
 
         if (myCharacterController.isGrounded)
+        {
             myLastGroundedTime = Time.time;
+        }
 
         CheckForInput();
         MoveCharacter();
@@ -68,7 +70,7 @@ public class PlayerMovement : MonoBehaviour
         mySkateboard.SetActive(myIsSkating);
         myAnimator.SetBool("isSkating", myIsSkating);
 
-        float currentSpeed = myCharacterController.velocity.magnitude;
+        _ = myCharacterController.velocity.magnitude;
 
         if (myPushCounter < mySkateSpeed && myIsSkating)
         {
@@ -85,9 +87,9 @@ public class PlayerMovement : MonoBehaviour
 
     private void MoveCharacter()
     {
-        var Speed = InputMagnitude * myMaximumSpeed * mySpeedMultiplier;
-        var HorizontalInput = Input.GetAxis("Horizontal");
-        var VerticalInput = Input.GetAxis("Vertical");
+        float Speed = myInputMagnitude * myMaximumSpeed * mySpeedMultiplier;
+        float HorizontalInput = Input.GetAxis("Horizontal");
+        float VerticalInput = Input.GetAxis("Vertical");
 
         Vector3 cameraForward = myCameraTransform.forward;
         Vector3 cameraRight = myCameraTransform.right;
@@ -98,23 +100,25 @@ public class PlayerMovement : MonoBehaviour
 
         Vector3 MovementDirection = (cameraForward * VerticalInput) + (cameraRight * HorizontalInput);
         MovementDirection.Normalize();
-        InputMagnitude = Mathf.Clamp01(MovementDirection.magnitude);
-        myAnimator.SetFloat("InputMagnitude", InputMagnitude, 0.05f, Time.deltaTime);
+        myInputMagnitude = Mathf.Clamp01(MovementDirection.magnitude);
+        myAnimator.SetFloat("InputMagnitude", myInputMagnitude, 0.05f, Time.deltaTime);
 
         AnimateCharacter();
         RotateToPlaneNormal();
 
-        var Velocity = MovementDirection * Speed;
+        Vector3 Velocity = MovementDirection * Speed;
         Velocity.y = myYSpeed;
 
         _ = myCharacterController.Move(Velocity * Time.deltaTime);
 
         if (VerticalInput != 0)
+        {
             myAnimator.SetBool("IsMoving", true);
+        }
 
         if (MovementDirection != Vector3.zero)
         {
-            var ToRotation = Quaternion.LookRotation(MovementDirection, Vector3.up);
+            Quaternion ToRotation = Quaternion.LookRotation(MovementDirection, Vector3.up);
             transform.rotation = Quaternion.RotateTowards(transform.rotation, ToRotation, myRotationSpeed * Time.deltaTime);
         }
     }
@@ -144,11 +148,11 @@ public class PlayerMovement : MonoBehaviour
     private void RotateToPlaneNormal()
     {
         // Raycast downward to detect the plane
-        if (Physics.Raycast(transform.position, -transform.up, out var Hit))
+        if (Physics.Raycast(transform.position, -transform.up, out RaycastHit Hit))
         {
 
             // Calculate the rotation needed to align with the plane normal
-            var TargetRotation = Quaternion.FromToRotation(myCapsuleTransform.up, Hit.normal) *
+            Quaternion TargetRotation = Quaternion.FromToRotation(myCapsuleTransform.up, Hit.normal) *
                                  myCapsuleTransform.rotation;
 
             // Smoothly rotate the capsule towards the target rotation
@@ -161,17 +165,19 @@ public class PlayerMovement : MonoBehaviour
     private void CheckForInput()
     {
         if (Input.GetKeyDown(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
-            InputMagnitude /= 2;
-
-        else if (Input.GetKeyDown(KeyCode.Tab) || Input.GetButtonDown("Fire1"))
         {
-            myIsSkating = !myIsSkating;
-            myAnimator.SetBool("isSkating", myIsSkating);
+            myInputMagnitude /= 2;
         }
 
-        else if (Input.GetButtonDown("Jump"))
+        //else if (Input.GetKeyDown(KeyCode.Tab) || Input.GetButtonDown("Fire1"))
+        //{
+        //    myIsSkating = !myIsSkating;
+        //    myAnimator.SetBool("isSkating", myIsSkating);
+        //}
+
+        else if (Input.GetButtonDown("Jump") || Input.GetButtonDown("Fire1"))
         {
-            ThrowItem(myCurrentThrowable);
+            ThrowItem();
             myAnimator.SetTrigger("Throw");
         }
 
@@ -183,17 +189,17 @@ public class PlayerMovement : MonoBehaviour
     }
 
 
-    public void ThrowItem(Item theItem)
+    public void ThrowItem()
     {
-        if (theItem != null  && theItem.myIsThrowable)
-        {
-            Vector3 throwDirection = transform.forward;
-            GameObject thrownObject = Instantiate(theItem.myThrownObjectPrefab, transform.position, transform.rotation);
-            Rigidbody thrownObjectRigidbody = thrownObject.GetComponent<Rigidbody>();
-            thrownObjectRigidbody.useGravity = true;
-            thrownObjectRigidbody.AddForce(throwDirection * 60, ForceMode.Impulse);
-            thrownObjectRigidbody.AddTorque(throwDirection * theItem.myThrowForce, ForceMode.Impulse);
-        }
+        //if (theItem != null  && theItem.myIsThrowable)
+        //{
+        Vector3 throwDirection = transform.forward;
+        GameObject thrownObject = Instantiate(myCurrentThrowable.myThrownObjectPrefab, transform.position, transform.rotation);
+        Rigidbody thrownObjectRigidbody = thrownObject.GetComponent<Rigidbody>();
+        thrownObjectRigidbody.useGravity = true;
+        thrownObjectRigidbody.AddForce(throwDirection * 60, ForceMode.Impulse);
+        thrownObjectRigidbody.AddTorque(throwDirection * myCurrentThrowable.myThrowForce, ForceMode.Impulse);
+        //}
     }
 
 
