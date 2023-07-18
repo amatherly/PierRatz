@@ -28,7 +28,7 @@ public class PickupItem : MonoBehaviour
     {
         if (other.gameObject.CompareTag("Player"))
         {
-            myInventory.addToInventory(myItem);
+            //myInventory.addToInventory(myItem);
             Destroy(gameObject);
         }
     }

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Wrench
   m_EditorClassIdentifier: 
   myName: wrench
-  myType: 0
+  myType: 1
   myCount: 42
   myIsThrowable: 1
   myThrownObjectPrefab: {fileID: 1727974784541635641, guid: 9439b0a2824275645976f219e7b0cb8f, type: 3}

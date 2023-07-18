@@ -11,7 +11,7 @@ public class PlayerMovement : MonoBehaviour
     public Transform myCameraTransform;
     public Transform myCapsuleTransform;
     public CharacterController myCharacterController;
-    private readonly bool myIsSkating = false;
+    private bool myIsSkating = false;
     private float myInputMagnitude;
 
 
@@ -150,13 +150,15 @@ public class PlayerMovement : MonoBehaviour
         // Raycast downward to detect the plane
         if (Physics.Raycast(transform.position, -transform.up, out RaycastHit Hit))
         {
+            if (Hit.transform.tag == "Ground")
+            {
+                // Calculate the rotation needed to align with the plane normal
+                Quaternion TargetRotation = Quaternion.FromToRotation(myCapsuleTransform.up, Hit.normal) *
+                                     myCapsuleTransform.rotation;
 
-            // Calculate the rotation needed to align with the plane normal
-            Quaternion TargetRotation = Quaternion.FromToRotation(myCapsuleTransform.up, Hit.normal) *
-                                 myCapsuleTransform.rotation;
-
-            // Smoothly rotate the capsule towards the target rotation
-            myCapsuleTransform.rotation = TargetRotation;
+                // Smoothly rotate the capsule towards the target rotation
+                myCapsuleTransform.rotation = TargetRotation;
+            }
         }
     }
 
@@ -169,13 +171,13 @@ public class PlayerMovement : MonoBehaviour
             myInputMagnitude /= 2;
         }
 
-        //else if (Input.GetKeyDown(KeyCode.Tab) || Input.GetButtonDown("Fire1"))
-        //{
-        //    myIsSkating = !myIsSkating;
-        //    myAnimator.SetBool("isSkating", myIsSkating);
-        //}
+        else if (Input.GetKeyDown(KeyCode.Tab) || Input.GetButtonDown("Fire1"))
+        {
+            myIsSkating = !myIsSkating;
+            myAnimator.SetBool("isSkating", myIsSkating);
+        }
 
-        else if (Input.GetButtonDown("Jump") || Input.GetButtonDown("Fire1"))
+        else if (Input.GetButtonDown("Jump"))
         {
             ThrowItem();
             myAnimator.SetTrigger("Throw");
