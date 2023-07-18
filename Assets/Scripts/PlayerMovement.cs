@@ -169,7 +169,7 @@ public class PlayerMovement : MonoBehaviour
             myAnimator.SetBool("isSkating", myIsSkating);
         }
 
-        else if (Input.GetButtonDown("Fire2"))
+        else if (Input.GetButtonDown("Jump"))
         {
             ThrowItem(myCurrentThrowable);
             myAnimator.SetTrigger("Throw");
@@ -185,7 +185,7 @@ public class PlayerMovement : MonoBehaviour
 
     public void ThrowItem(Item theItem)
     {
-        if (theItem != null && theItem.myCount != 0 && theItem.myIsThrowable)
+        if (theItem != null  && theItem.myIsThrowable)
         {
             Vector3 throwDirection = transform.forward;
             GameObject thrownObject = Instantiate(theItem.myThrownObjectPrefab, transform.position, transform.rotation);
