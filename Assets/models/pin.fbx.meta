@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: e904630d289717e43ab88761153586bf
+guid: b33034be10d75114d9e426dff747a4a5
 ModelImporter:
   serializedVersion: 21300
   internalIDToNameTable: []
@@ -7,28 +7,8 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: UV_skateboard
-    second: {fileID: 2100000, guid: f3b150ff94671bd4c8ca3ec24bb0f719, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: metal
-    second: {fileID: 2100000, guid: b2a263008bd1c244d86adf532369f91f, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: metal_black
-    second: {fileID: 2100000, guid: ff6ee37b1f2d30b4090313dd509e999d, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: metal_red
-    second: {fileID: 2100000, guid: 35d73dd01ace60145b987b59cbf3cdd3, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: plastic
-    second: {fileID: 2100000, guid: 036a4d1d03459f345b2c09d35163c9d6, type: 2}
+      name: Material.005
+    second: {fileID: 2100000, guid: 2646def004d5dc14fbc9415a76a7030d, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
