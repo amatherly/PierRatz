@@ -2,17 +2,23 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Trucks : MonoBehaviour
+public class Trucks : UpgradableItem
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+    private static float INCREMENT = 1f;
 
-    // Update is called once per frame
     void Update()
     {
-        
+        if (Input.GetKeyDown(KeyCode.U))
+        {
+            Upgrade(INCREMENT);
+            AdjustTightness(Level);
+        }
+    }
+
+    void  AdjustTightness(float value)
+    {
+        Level = value;
+        Player.TruckTightness = value;
+        Debug.Log("Trucks: " + Player.TruckTightness);
     }
 }

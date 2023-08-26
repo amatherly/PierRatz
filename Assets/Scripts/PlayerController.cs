@@ -1,144 +1,335 @@
 using System;
 using UnityEngine;
 
-
 public class PlayerController : MonoBehaviour
 {
-    [Header("Movement Settings")]
-    public float walkSpeed = 3f;
-    public float skateSpeed = 6f;
-    public float slopeForce = 10f;
-    public float slopeForceRayLength = 0.1f;
-    public float maxSkateSpeed = 20f;
-    public float minSkateSpeed = 2f;
-    public float skateAcceleration = 3f;
-    public float truckTightness = 2;
-    private CharacterController charController;
-
-    [Header("Gravity Settings")]
-    public float gravity = 9.8f;
-
-    [Header("Camera Settings")]
-    public Transform cameraTransform;
+    #region Fields
+    [SerializeField]
+    private readonly float mySkateSpeed = 18;
+    private readonly float myWalkSpeed = 7;
+    public Animator myAnimator;
+    public Transform myCameraTransform;
+    public Transform myCapsuleTransform;
+    public CharacterController myCharacterController;
+    private bool myIsSkating = false;
+    private float myInputMagnitude;
+    [SerializeField]
+    private float truckTightness = 1f;
+    public Rigidbody rb;
 
 
-    private bool isSkating = true;
-    private Animator animator;
-    private float currentSkateSpeed = 0f;
-    private Vector3 velocity; // To keep track of the downward velocity
+    [SerializeField]
+    private readonly float myJumpButtonGracePeriod;
+    private float? myJumpButtonPressedTime;
+    private readonly float myJumpSpeed;
+    private float? myLastGroundedTime;
 
-    void Start()
+
+    [SerializeField]
+    private readonly float myMaximumSpeed = 10;
+    public float myOriginalStepOffset;
+    private readonly float myRotationSpeed = 1000;
+
+
+    [SerializeField]
+    public GameObject mySkateboard;
+    private float mySpeedMultiplier = 0.5f;
+    private float myYSpeed;
+    public float myThrowForce = 1000f;
+    private readonly float mySlope = 1f;
+    public bool myIsThrowing = false;
+    public float myPushCounter = 0;
+    public Item myCurrentThrowable;
+    [SerializeField]
+    public InventoryManager myInventoryManager;
+    #endregion
+
+    // Start is called before the first frame update
+    private void Start()
     {
-        animator = GetComponent<Animator>();
-        charController = GetComponent<CharacterController>();
+        myAnimator = GetComponent<Animator>();
+        myCharacterController = GetComponent<CharacterController>();
+        myOriginalStepOffset = myCharacterController.stepOffset;
+        rb = GetComponent<Rigidbody>();
     }
 
-    void Update()
+    // Update is called once per frame
+    private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.LeftControl))
+        mySpeedMultiplier = myIsSkating ? 2f : 1.5f;
+        myYSpeed += Physics.gravity.y * Time.deltaTime * 10;
+
+        if (myCharacterController.isGrounded)
         {
-            isSkating = !isSkating;
-            currentSkateSpeed = walkSpeed;
+            myLastGroundedTime = Time.time;
         }
 
-
+        CheckForInput();
+        MoveCharacter();
     }
 
-    private void FixedUpdate()
+
+    private void AnimateCharacter()
     {
-        AlignWithGround();
-        HandleMovement();
-    }
+        Debug.Log("Current Speed: "+ rb.velocity.magnitude);
+        myAnimator.SetFloat("InputMagnitude", myInputMagnitude);
+        mySkateboard.SetActive(myIsSkating);
 
-    void HandleMovement()
-    {
-        float horizontal = Input.GetAxis("Horizontal");
-        float vertical = Input.GetAxis("Vertical");
-        Vector3 direction = new Vector3(horizontal, 0f, vertical).normalized;
+        _ = myCharacterController.velocity.magnitude;
 
-        // Vector3 moveDirection = cameraTransform.forward * vertical + cameraTransform.right * horizontal;
-        Vector3 moveDirection = transform.forward * vertical + transform.right * horizontal;
-        moveDirection.y = 0f;
-        moveDirection.Normalize();
-
-        animator.SetFloat("InputMagnitude", direction.magnitude);
-        animator.SetBool("isWalking", direction.magnitude > 0);
-        animator.SetBool("isSkating", isSkating && direction.magnitude > 0);
-
-        float movementSpeed = isSkating ? currentSkateSpeed : walkSpeed;
-        bool isPushing = currentSkateSpeed < maxSkateSpeed;
-
-        animator.SetBool("isPushing", isPushing);
-
-        if (isPushing && currentSkateSpeed < maxSkateSpeed && isSkating)
+        if (myIsSkating && rb.velocity.magnitude < myMaximumSpeed)
         {
-            currentSkateSpeed += skateAcceleration * Time.deltaTime;
-            currentSkateSpeed = Mathf.Clamp(currentSkateSpeed, 0f, maxSkateSpeed);
-        }
-
-        moveDirection *= movementSpeed;
-
-        if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, slopeForceRayLength) && isSkating)
-        {
-            float slopeAngle = Vector3.Angle(hit.normal, Vector3.up);
-            float slopeDirectionFactor = Vector3.Dot(moveDirection.normalized, hit.normal) > 0 ? 1 : -1;
-            float slopeSpeedAdjustment = slopeAngle / 45f * slopeDirectionFactor * slopeForce;
-            moveDirection += moveDirection.normalized * slopeSpeedAdjustment * movementSpeed;
-        }
-
-        if (horizontal != 0 || vertical != 0) 
-        {
-            Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * truckTightness);
-        }
-        
-        Debug.Log("is grounded: " + IsGrounded());
-        
-        if (IsGrounded())
-        {
-            moveDirection.y = 0f;  
+            myAnimator.SetFloat("SkateSpeed", myPushCounter);
+            myAnimator.SetBool("isPushing", true);
         }
         else
         {
-            moveDirection.y -= gravity;  
+            myAnimator.SetBool("isPushing", false);
         }
+        myAnimator.SetBool("isSkating", myIsSkating);
+
+    }
+
+    private void MoveCharacter()
+    {
+        float Speed = myInputMagnitude * myMaximumSpeed * mySpeedMultiplier;
+        float HorizontalInput = Input.GetAxis("Horizontal");
+        float VerticalInput = Input.GetAxis("Vertical");
+
+        Vector3 MovementDirection = new Vector3(HorizontalInput * truckTightness, 0, VerticalInput * mySkateSpeed);
+        MovementDirection.Normalize();
+        myInputMagnitude = Mathf.Clamp01(MovementDirection.magnitude);
         
-        charController.Move(moveDirection * Time.deltaTime);
-    }
+        AnimateCharacter();
+        RotateToPlaneNormal();
 
-    void AlignWithGround()
-    {
-        if (isSkating && Physics.Raycast(transform.position, -transform.up, out RaycastHit hit, slopeForceRayLength))
+        Vector3 Velocity = MovementDirection * Speed;
+        Velocity.y = myYSpeed;
+
+        _ = myCharacterController.Move(Velocity * Time.deltaTime);
+        
+        myAnimator.SetBool("isWalking", VerticalInput != 0);
+
+        if (MovementDirection != Vector3.zero)
         {
-            Quaternion toRotation = Quaternion.FromToRotation(transform.up, hit.normal) * transform.rotation;
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, Time.deltaTime * 30f);
+            Quaternion ToRotation = Quaternion.LookRotation(MovementDirection, Vector3.up);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, ToRotation, myRotationSpeed * Time.deltaTime);
         }
     }
 
 
-    bool IsGrounded()
+    private void Jump()
     {
-        // Define the origin and direction of the ray
-        Vector3 rayOrigin = transform.position;
-        Vector3 rayDirection = Vector3.down;
-
-        // Perform the raycast
-        if (isSkating && Physics.Raycast(transform.position, -transform.up, out RaycastHit hit, slopeForceRayLength))
+        if (Time.time - myLastGroundedTime <= myJumpButtonGracePeriod)
         {
-            Debug.DrawRay(rayOrigin, rayDirection * slopeForceRayLength, Color.green);
-            return true;
+            myCharacterController.stepOffset = myOriginalStepOffset;
+            myYSpeed = -0.9f;
+
+            if (Time.time - myJumpButtonPressedTime <= myJumpButtonGracePeriod)
+            {
+                myYSpeed = myJumpSpeed;
+                myJumpButtonPressedTime = null;
+                myLastGroundedTime = null;
+            }
         }
-        Debug.DrawRay(rayOrigin, rayDirection * slopeForceRayLength, Color.red);
-        return false;
+        else
+        {
+            myCharacterController.stepOffset = 0;
+        }
     }
 
-    public void OnCollisionEnter(Collision other)
+
+    private void RotateToPlaneNormal()
     {
-        Debug.Log("collision detected");
+        // // Raycast downward to detect the plane
+        // if (Physics.Raycast(transform.position, -transform.up, out RaycastHit Hit))
+        // {
+        //     if (Hit.transform.tag == "Ground")
+        //     {
+        //         // Calculate the rotation needed to align with the plane normal
+        //         Quaternion TargetRotation = Quaternion.FromToRotation(myCapsuleTransform.up, Hit.normal) *
+        //                              myCapsuleTransform.rotation;
+        //
+        //         // Smoothly rotate the capsule towards the target rotation
+        //         myCapsuleTransform.rotation = TargetRotation;
+        //     }
+        // }
     }
 
-    public void OnTriggerEnter(Collider other)
+
+
+    private void CheckForInput()
     {
-        Debug.Log("trigger detected");
+        if (Input.GetKeyDown(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+        {
+            myInputMagnitude /= 2;
+        }
+
+        else if (Input.GetKeyDown(KeyCode.Tab) || Input.GetButtonDown("Fire1"))
+        {
+            myIsSkating = !myIsSkating;
+            myAnimator.SetBool("isSkating", myIsSkating);
+        }
+
+        else if (Input.GetButtonDown("Jump"))
+        {
+            ThrowItem();
+            myAnimator.SetTrigger("Throw");
+        }
+
+        else if (Input.GetButtonDown("Jump") || Input.GetKey(KeyCode.Space))
+        {
+            myJumpButtonPressedTime = Time.time;
+            myAnimator.SetTrigger("Ollie");
+        }
+    }
+
+
+    public void ThrowItem()
+    {
+        //if (theItem != null  && theItem.myIsThrowable)
+        //{
+        Vector3 throwDirection = transform.forward;
+        GameObject thrownObject = Instantiate(myCurrentThrowable.myThrownObjectPrefab, transform.position, transform.rotation);
+        Rigidbody thrownObjectRigidbody = thrownObject.GetComponent<Rigidbody>();
+        thrownObjectRigidbody.useGravity = true;
+        thrownObjectRigidbody.AddForce(throwDirection * 60, ForceMode.Impulse);
+        thrownObjectRigidbody.AddTorque(throwDirection * myCurrentThrowable.myThrowForce, ForceMode.Impulse);
+        //}
+    }
+
+
+    private void OnApplicationFocus(bool focus)
+    {
+        Cursor.lockState = CursorLockMode.Locked;
+    }
+    
+    
+        public float SkateSpeed => mySkateSpeed;
+
+    public float WalkSpeed => myWalkSpeed;
+
+    public Animator Animator
+    {
+        get => myAnimator;
+        set => myAnimator = value;
+    }
+
+    public Transform CameraTransform
+    {
+        get => myCameraTransform;
+        set => myCameraTransform = value;
+    }
+
+    public Transform CapsuleTransform
+    {
+        get => myCapsuleTransform;
+        set => myCapsuleTransform = value;
+    }
+
+    public CharacterController CharacterController
+    {
+        get => myCharacterController;
+        set => myCharacterController = value;
+    }
+
+    public bool IsSkating
+    {
+        get => myIsSkating;
+        set => myIsSkating = value;
+    }
+
+    public float InputMagnitude
+    {
+        get => myInputMagnitude;
+        set => myInputMagnitude = value;
+    }
+
+    public float TruckTightness
+    {
+        get => truckTightness;
+        set => truckTightness = value;
+    }
+
+    public Rigidbody Rb
+    {
+        get => rb;
+        set => rb = value;
+    }
+
+    public float JumpButtonGracePeriod => myJumpButtonGracePeriod;
+
+    public float? JumpButtonPressedTime
+    {
+        get => myJumpButtonPressedTime;
+        set => myJumpButtonPressedTime = value;
+    }
+
+    public float JumpSpeed => myJumpSpeed;
+
+    public float? LastGroundedTime
+    {
+        get => myLastGroundedTime;
+        set => myLastGroundedTime = value;
+    }
+
+    public float MaximumSpeed => myMaximumSpeed;
+
+    public float OriginalStepOffset
+    {
+        get => myOriginalStepOffset;
+        set => myOriginalStepOffset = value;
+    }
+
+    public float RotationSpeed => myRotationSpeed;
+
+    public GameObject Skateboard
+    {
+        get => mySkateboard;
+        set => mySkateboard = value;
+    }
+
+    public float SpeedMultiplier
+    {
+        get => mySpeedMultiplier;
+        set => mySpeedMultiplier = value;
+    }
+
+    public float YSpeed
+    {
+        get => myYSpeed;
+        set => myYSpeed = value;
+    }
+
+    public float ThrowForce
+    {
+        get => myThrowForce;
+        set => myThrowForce = value;
+    }
+
+    public float Slope => mySlope;
+
+    public bool IsThrowing
+    {
+        get => myIsThrowing;
+        set => myIsThrowing = value;
+    }
+
+    public float PushCounter
+    {
+        get => myPushCounter;
+        set => myPushCounter = value;
+    }
+
+    public Item CurrentThrowable
+    {
+        get => myCurrentThrowable;
+        set => myCurrentThrowable = value;
+    }
+
+    public InventoryManager InventoryManager
+    {
+        get => myInventoryManager;
+        set => myInventoryManager = value;
     }
 }
