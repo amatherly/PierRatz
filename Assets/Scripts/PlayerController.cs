@@ -1,11 +1,18 @@
 using System;
+using UnityEditor;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
+    public bool IsLevelFinished
+    {
+        get => isLevelFinished;
+        set => isLevelFinished = value;
+    }
+
     #region Fields
-    [SerializeField]
-    private readonly float mySkateSpeed = 18;
+
+    [SerializeField] private readonly float mySkateSpeed = 18;
     private readonly float myWalkSpeed = 7;
     public Animator myAnimator;
     public Transform myCameraTransform;
@@ -13,26 +20,24 @@ public class PlayerController : MonoBehaviour
     public CharacterController myCharacterController;
     private bool myIsSkating = false;
     private float myInputMagnitude;
-    [SerializeField]
-    private float truckTightness = 1f;
+    [SerializeField] private float truckTightness = 1f;
     public Rigidbody rb;
+    private bool isLevelFinished = false;
+    private float carryOnSpeed = 100f;
+    private bool canMove = true;
 
-
-    [SerializeField]
-    private readonly float myJumpButtonGracePeriod;
+    [SerializeField] private readonly float myJumpButtonGracePeriod;
     private float? myJumpButtonPressedTime;
     private readonly float myJumpSpeed;
     private float? myLastGroundedTime;
 
 
-    [SerializeField]
-    private readonly float myMaximumSpeed = 10;
+    [SerializeField] private readonly float myMaximumSpeed = 10;
     public float myOriginalStepOffset;
     private readonly float myRotationSpeed = 1000;
 
 
-    [SerializeField]
-    public GameObject mySkateboard;
+    [SerializeField] public GameObject mySkateboard;
     private float mySpeedMultiplier = 0.5f;
     private float myYSpeed;
     public float myThrowForce = 1000f;
@@ -40,8 +45,8 @@ public class PlayerController : MonoBehaviour
     public bool myIsThrowing = false;
     public float myPushCounter = 0;
     public Item myCurrentThrowable;
-    [SerializeField]
-    public InventoryManager myInventoryManager;
+    [SerializeField] public InventoryManager myInventoryManager;
+
     #endregion
 
     // Start is called before the first frame update
@@ -64,14 +69,19 @@ public class PlayerController : MonoBehaviour
             myLastGroundedTime = Time.time;
         }
 
-        CheckForInput();
-        MoveCharacter();
+        if (canMove)
+        {
+            CheckForInput();
+            MoveCharacter();
+        }
+
+        if (isLevelFinished) CarryOn();
     }
 
 
     private void AnimateCharacter()
     {
-        Debug.Log("Current Speed: "+ rb.velocity.magnitude);
+        Debug.Log("Current Speed: " + rb.velocity.magnitude);
         myAnimator.SetFloat("InputMagnitude", myInputMagnitude);
         mySkateboard.SetActive(myIsSkating);
 
@@ -86,8 +96,8 @@ public class PlayerController : MonoBehaviour
         {
             myAnimator.SetBool("isPushing", false);
         }
-        myAnimator.SetBool("isSkating", myIsSkating);
 
+        myAnimator.SetBool("isSkating", myIsSkating);
     }
 
     private void MoveCharacter()
@@ -99,7 +109,7 @@ public class PlayerController : MonoBehaviour
         Vector3 MovementDirection = new Vector3(HorizontalInput * truckTightness, 0, VerticalInput * mySkateSpeed);
         MovementDirection.Normalize();
         myInputMagnitude = Mathf.Clamp01(MovementDirection.magnitude);
-        
+
         AnimateCharacter();
         RotateToPlaneNormal();
 
@@ -107,13 +117,14 @@ public class PlayerController : MonoBehaviour
         Velocity.y = myYSpeed;
 
         _ = myCharacterController.Move(Velocity * Time.deltaTime);
-        
+
         myAnimator.SetBool("isWalking", VerticalInput != 0);
 
         if (MovementDirection != Vector3.zero)
         {
             Quaternion ToRotation = Quaternion.LookRotation(MovementDirection, Vector3.up);
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, ToRotation, myRotationSpeed * Time.deltaTime);
+            transform.rotation =
+                Quaternion.RotateTowards(transform.rotation, ToRotation, myRotationSpeed * Time.deltaTime);
         }
     }
 
@@ -157,7 +168,6 @@ public class PlayerController : MonoBehaviour
     }
 
 
-
     private void CheckForInput()
     {
         if (Input.GetKeyDown(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
@@ -190,7 +200,8 @@ public class PlayerController : MonoBehaviour
         //if (theItem != null  && theItem.myIsThrowable)
         //{
         Vector3 throwDirection = transform.forward;
-        GameObject thrownObject = Instantiate(myCurrentThrowable.myThrownObjectPrefab, transform.position, transform.rotation);
+        GameObject thrownObject =
+            Instantiate(myCurrentThrowable.myThrownObjectPrefab, transform.position, transform.rotation);
         Rigidbody thrownObjectRigidbody = thrownObject.GetComponent<Rigidbody>();
         thrownObjectRigidbody.useGravity = true;
         thrownObjectRigidbody.AddForce(throwDirection * 60, ForceMode.Impulse);
@@ -198,14 +209,20 @@ public class PlayerController : MonoBehaviour
         //}
     }
 
+    public void CarryOn()
+    {
+        canMove = false;
+        transform.position += transform.forward * carryOnSpeed * Time.deltaTime;
+    }
+
 
     private void OnApplicationFocus(bool focus)
     {
         Cursor.lockState = CursorLockMode.Locked;
     }
-    
-    
-        public float SkateSpeed => mySkateSpeed;
+
+
+    public float SkateSpeed => mySkateSpeed;
 
     public float WalkSpeed => myWalkSpeed;
 

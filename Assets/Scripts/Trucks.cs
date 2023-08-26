@@ -1,21 +1,27 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Trucks : UpgradableItem
 {
-    private static float INCREMENT = 1f;
+    private static int[] costs = { 100, 175, 250, 300, 375, 400, 1, 1, 1, 1, 1 };
+
+    private void Awake()
+    {
+        UpgradeCosts = costs;
+    }
 
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.U))
         {
-            Upgrade(INCREMENT);
+            Upgrade();
             AdjustTightness(Level);
         }
     }
 
-    void  AdjustTightness(float value)
+    void  AdjustTightness(int value)
     {
         Level = value;
         Player.TruckTightness = value;

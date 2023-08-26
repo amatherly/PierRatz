@@ -6,6 +6,7 @@ using UnityEngine;
 public class PinController : MonoBehaviour
 {
     [SerializeField] private PlayerController player;
+    [SerializeField] private Bank myBank;
     [SerializeField] private Vector3 COfMass;
 
     private float force = 5;

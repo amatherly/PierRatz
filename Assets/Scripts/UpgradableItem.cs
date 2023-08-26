@@ -5,10 +5,13 @@ using UnityEngine;
 
 public class UpgradableItem : MonoBehaviour
 {
-    private static float level = 1;
-    private static float minLevel = 1;
-    private static float maxLevel = 10;
+
+    private static int level = 1;
+    private static int minLevel = 1;
+    private static int maxLevel = 10;
     private static int[] upgradeCosts;
+    private static int[] upgrades;
+
     private bool IsMaxedOut => level == maxLevel;
     private bool CanUpgrade => !IsMaxedOut;
     [SerializeField]
@@ -19,11 +22,11 @@ public class UpgradableItem : MonoBehaviour
         player = FindObjectOfType<PlayerController>();
     }
 
-    public virtual void Upgrade(float increment)
+    public virtual void Upgrade()
     {
         if (CanUpgrade)
         {
-            level += increment;
+            level += upgrades[level];
             ApplyNewEffects();
         }
     }
@@ -33,13 +36,13 @@ public class UpgradableItem : MonoBehaviour
         
     }
     
-    public float Level
+    public int Level
     {
         get => level;
         set => level = value;
     }
 
-    public float MaxLevel
+    public int MaxLevel
     {
         get => maxLevel;
         set => maxLevel = value;
@@ -57,9 +60,15 @@ public class UpgradableItem : MonoBehaviour
         set => player = value;
     }
     
-    public static float MinLevel
+    public static int MinLevel
     {
         get => minLevel;
         set => minLevel = value;
+    }
+    
+    public static int[] Upgrades
+    {
+        get => upgrades;
+        set => upgrades = value;
     }
 }
