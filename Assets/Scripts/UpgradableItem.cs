@@ -5,7 +5,6 @@ using UnityEngine;
 
 public class UpgradableItem : MonoBehaviour
 {
-
     private static int level = 1;
     private static int minLevel = 1;
     private static int maxLevel = 10;

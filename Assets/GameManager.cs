@@ -52,13 +52,9 @@ public class GameManager : MonoBehaviour
     }
     
     public GameManager Game => GAME;
-
     public PlayerController Player => player;
-
     public Bank Bank => BANK;
-
     public LevelController LvlController => lvlController;
-
     public CinemachineFreeLook Camera => camera;
     
     public UIController UIController => UI_Controller;

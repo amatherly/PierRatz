@@ -15,6 +15,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private readonly float mySkateSpeed = 18;
     private readonly float myWalkSpeed = 7;
     public Animator myAnimator;
+    [SerializeField] private AudioSource audioSource;
     public Transform myCameraTransform;
     public Transform myCapsuleTransform;
     public CharacterController myCharacterController;
@@ -122,9 +123,13 @@ public class PlayerController : MonoBehaviour
 
         if (MovementDirection != Vector3.zero)
         {
+            if(!audioSource.isPlaying) audioSource.Play();
             Quaternion ToRotation = Quaternion.LookRotation(MovementDirection, Vector3.up);
-            transform.rotation =
-                Quaternion.RotateTowards(transform.rotation, ToRotation, myRotationSpeed * Time.deltaTime);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, ToRotation, myRotationSpeed * Time.deltaTime);
+        }
+        else
+        {
+            audioSource.Pause();
         }
     }
 
