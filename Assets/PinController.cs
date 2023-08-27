@@ -1,49 +1,35 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class PinController : MonoBehaviour
 {
-    [SerializeField] private PlayerController player;
-    [SerializeField] private Bank myBank;
-    [SerializeField] private Vector3 COfMass;
+    private static readonly int priceForPins = 1;
+    private int discount = 1;
+    private int pinsDown = 0;
+    [SerializeField]
+    private Pin[] pins;
 
-    private float force = 5;
-    private float radius = 2;
-    private float upForce = 0f;
-    private Rigidbody rb;
-
-    // Start is called before the first frame update
-    void Start()
+    public void CheckPins()
     {
-        player = FindObjectOfType<PlayerController>();
-        rb = GetComponent<Rigidbody>();
-        rb.centerOfMass = COfMass;
-        Debug.Log(transform.lossyScale.y / 2);
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-    }
-
-    public void OnTriggerEnter(Collider other)
-    {
-        if (other.gameObject.CompareTag("Player"))
+        int count = 0;
+        foreach(Pin pin in pins)
         {
-            rb.AddRelativeForce(player.transform.localPosition * force);
+            Debug.Log("count: "+ count);
+            // Debug.Log("Checking pin: " + pin.name + "Rotation: " + pin.transform.rotation.z);
+            Vector3 eulerAngles = pin.transform.rotation.eulerAngles;
+            if (Mathf.Abs(eulerAngles.z) > 1f || Mathf.Abs(eulerAngles.x) > 1f)
+            {
+                pinsDown++;
+            } 
         }
+        Debug.Log("pins down: "+ pinsDown);
+        CountPins();
     }
 
-    public void OnCollisionEnter(Collision other)
+    public void CountPins()
     {
-        if (other.gameObject.CompareTag("Player"))
-        {
-            Debug.Log("EXPLOSIONFORCE: " + rb.velocity);
-            Vector3 explosionPos = other.contacts[0].point;
-            rb.AddExplosionForce(force, explosionPos, radius, upForce, ForceMode.Impulse);
-            rb.AddRelativeForce(transform.forward * force, ForceMode.Impulse);
-        }
+        GameManager.GAME.Bank.AddToBank(pinsDown * priceForPins);
+        GameManager.GAME.UIController.SetBankUI();
     }
 }

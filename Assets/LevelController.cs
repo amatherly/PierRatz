@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using Cinemachine;
 using UnityEngine;
 
@@ -11,18 +12,22 @@ public class LevelController : MonoBehaviour
     
     [SerializeField]
     private BoxCollider startPos;
-    
-    [SerializeField]
-    private CinemachineFreeLook camera;
 
-    private PlayerController player;
-    // Start is called before the first frame update
+    [SerializeField]
+    private PinController pinController;
+
+    [SerializeField] private int waitTime = 3;
+    
+    private int count = 0;
+
+    
+
     void Start()
     {
-        player = FindObjectOfType<PlayerController>();
+        InitializePins();
+
     }
 
-    // Update is called once per frame
     void Update()
     {
         
@@ -30,12 +35,39 @@ public class LevelController : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player"))
+        if (other.CompareTag("PinCollider"))
         {
-            camera.Follow = null;
-            camera.m_Orbits[1].m_Height = 10;
-            player.IsLevelFinished = true;
-            player.CarryOn();
+            GameManager.GAME.Camera.Follow = null;
+            GameManager.GAME.Camera.m_Orbits[1].m_Height = 10;
+            GameManager.GAME.Player.IsLevelFinished = true;
+            GameManager.GAME.Player.CarryOn();
         }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        StartCoroutine(WaitAndCheckPins());
+    }
+
+    private IEnumerator WaitAndCheckPins()
+    {
+        count++;
+        Debug.Log("called: " + count + " times");
+        yield return new WaitForSeconds(waitTime);
+        pinController.CheckPins();
+    }
+    public void Pause()
+    {
+        
+    }
+    
+    public void Resume()
+    {
+        
+    }
+
+    public void InitializePins()
+    {
+        
     }
 }

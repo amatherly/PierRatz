@@ -5,27 +5,18 @@ using UnityEngine;
 
 public class Bank : MonoBehaviour
 {
-    private float money = 500;
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+    public float Money => money;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
-    public void AddToBank(float value)
+    private int money = 0;
+    
+    public void AddToBank(int value)
     {
         money += value;
     }
 
     public bool Buy(UpgradableItem item)
     {
-        float tempMoney = money - item.UpgradeCosts[item.Level];
+        int tempMoney = money - item.UpgradeCosts[item.Level];
         
         if (tempMoney >= 0)
         {

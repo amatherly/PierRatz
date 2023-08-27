@@ -23,7 +23,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float truckTightness = 1f;
     public Rigidbody rb;
     private bool isLevelFinished = false;
-    private float carryOnSpeed = 100f;
+    private float carryOnSpeed = 15f;
     private bool canMove = true;
 
     [SerializeField] private readonly float myJumpButtonGracePeriod;

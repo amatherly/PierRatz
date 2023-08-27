@@ -7,7 +7,7 @@ public class Trucks : UpgradableItem
 {
     private static int[] costs = { 100, 175, 250, 300, 375, 400, 1, 1, 1, 1, 1 };
 
-    private void Awake()
+    private void Start()
     {
         UpgradeCosts = costs;
     }
