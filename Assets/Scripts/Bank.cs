@@ -6,6 +6,7 @@ using UnityEngine;
 public class Bank : MonoBehaviour
 {
     public float Money => money;
+    public object Sounds { get; }
 
     private int money = 0;
     

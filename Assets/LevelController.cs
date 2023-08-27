@@ -7,30 +7,24 @@ using UnityEngine;
 
 public class LevelController : MonoBehaviour
 {
-    [SerializeField]
-    private BoxCollider endPos;
-    
-    [SerializeField]
-    private BoxCollider startPos;
+    [SerializeField] private BoxCollider endPos;
 
-    [SerializeField]
-    private PinController pinController;
+    [SerializeField] private BoxCollider startPos;
+
+    [SerializeField] private PinController pinController;
 
     [SerializeField] private int waitTime = 3;
-    
+
     private int count = 0;
 
-    
 
     void Start()
     {
         InitializePins();
-
     }
 
     void Update()
     {
-        
     }
 
     private void OnTriggerEnter(Collider other)
@@ -56,18 +50,16 @@ public class LevelController : MonoBehaviour
         yield return new WaitForSeconds(waitTime);
         pinController.CheckPins();
     }
+
     public void Pause()
     {
-        
     }
-    
+
     public void Resume()
     {
-        
     }
 
     public void InitializePins()
     {
-        
     }
 }

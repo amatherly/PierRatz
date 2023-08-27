@@ -1,30 +1,32 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
+
 using TMPro;
 using UnityEngine;
 
 public class Trucks : UpgradableItem
 {
-    private static int[] costs = { 100, 175, 250, 300, 375, 400, 1, 1, 1, 1, 1 };
+    private int[] costs = { 100, 175, 250, 300, 375, 400, 1, 1, 1, 1, 1 };
+    private int[] upgrades = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
     [SerializeField] private TMP_Text levelText;
 
-private void Start()
+    private void Start()
     {
+        Upgrades = upgrades;
         UpgradeCosts = costs;
     }
-
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.U))
         {
-            Upgrade();
+            base.Upgrade();
             AdjustTightness(Level);
-            levelText.SetText(Level.ToString());
         }
     }
-
-    void  AdjustTightness(int value)
+    public override void ApplyNewEffects()
+    {
+        Player.TruckTightness++;
+        levelText.SetText("Level: " + Level.ToString());
+    }
+    void AdjustTightness(int value)
     {
         Level = value;
         Player.TruckTightness = value;

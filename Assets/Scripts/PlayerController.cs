@@ -4,15 +4,9 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    public bool IsLevelFinished
-    {
-        get => isLevelFinished;
-        set => isLevelFinished = value;
-    }
-
     #region Fields
 
-    [SerializeField] private readonly float mySkateSpeed = 18;
+    [SerializeField] private readonly float mySkateSpeed = 10;
     private readonly float myWalkSpeed = 7;
     public Animator myAnimator;
     [SerializeField] private AudioSource audioSource;
@@ -24,15 +18,14 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float truckTightness = 1f;
     public Rigidbody rb;
     private bool isLevelFinished = false;
-    private float carryOnSpeed = 15f;
+    private float carryOnSpeed = 10f;
     private bool canMove = true;
 
     [SerializeField] private readonly float myJumpButtonGracePeriod;
     private float? myJumpButtonPressedTime;
     private readonly float myJumpSpeed;
     private float? myLastGroundedTime;
-
-
+    
     [SerializeField] private readonly float myMaximumSpeed = 10;
     public float myOriginalStepOffset;
     private readonly float myRotationSpeed = 1000;
@@ -50,16 +43,18 @@ public class PlayerController : MonoBehaviour
 
     #endregion
 
-    // Start is called before the first frame update
+
+    #region Methods
+
     private void Start()
     {
         myAnimator = GetComponent<Animator>();
         myCharacterController = GetComponent<CharacterController>();
         myOriginalStepOffset = myCharacterController.stepOffset;
         rb = GetComponent<Rigidbody>();
+        
     }
-
-    // Update is called once per frame
+    
     private void Update()
     {
         mySpeedMultiplier = myIsSkating ? 2f : 1.5f;
@@ -78,8 +73,7 @@ public class PlayerController : MonoBehaviour
 
         if (isLevelFinished) CarryOn();
     }
-
-
+    
     private void AnimateCharacter()
     {
         Debug.Log("Current Speed: " + rb.velocity.magnitude);
@@ -123,9 +117,10 @@ public class PlayerController : MonoBehaviour
 
         if (MovementDirection != Vector3.zero)
         {
-            if(!audioSource.isPlaying) audioSource.Play();
+            if (!audioSource.isPlaying) audioSource.Play();
             Quaternion ToRotation = Quaternion.LookRotation(MovementDirection, Vector3.up);
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, ToRotation, myRotationSpeed * Time.deltaTime);
+            transform.rotation =
+                Quaternion.RotateTowards(transform.rotation, ToRotation, myRotationSpeed * Time.deltaTime);
         }
         else
         {
@@ -133,12 +128,15 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-
     private void Jump()
     {
+        float customGravity = -20f;
+        myYSpeed += customGravity * Time.deltaTime;
+
         if (Time.time - myLastGroundedTime <= myJumpButtonGracePeriod)
         {
             myCharacterController.stepOffset = myOriginalStepOffset;
+
             myYSpeed = -0.9f;
 
             if (Time.time - myJumpButtonPressedTime <= myJumpButtonGracePeriod)
@@ -152,8 +150,11 @@ public class PlayerController : MonoBehaviour
         {
             myCharacterController.stepOffset = 0;
         }
-    }
 
+        // Apply the vertical movement
+        Vector3 move = new Vector3(0, myYSpeed, 0);
+        myCharacterController.Move(move * Time.deltaTime);
+    }
 
     private void RotateToPlaneNormal()
     {
@@ -172,7 +173,6 @@ public class PlayerController : MonoBehaviour
         // }
     }
 
-
     private void CheckForInput()
     {
         if (Input.GetKeyDown(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
@@ -180,7 +180,7 @@ public class PlayerController : MonoBehaviour
             myInputMagnitude /= 2;
         }
 
-        else if (Input.GetKeyDown(KeyCode.Tab) || Input.GetButtonDown("Fire1"))
+        else if (Input.GetKeyDown(KeyCode.Tab))
         {
             myIsSkating = !myIsSkating;
             myAnimator.SetBool("isSkating", myIsSkating);
@@ -198,8 +198,7 @@ public class PlayerController : MonoBehaviour
             myAnimator.SetTrigger("Ollie");
         }
     }
-
-
+    
     public void ThrowItem()
     {
         //if (theItem != null  && theItem.myIsThrowable)
@@ -220,12 +219,9 @@ public class PlayerController : MonoBehaviour
         transform.position += transform.forward * carryOnSpeed * Time.deltaTime;
     }
 
+    #endregion
 
-    private void OnApplicationFocus(bool focus)
-    {
-        Cursor.lockState = CursorLockMode.Locked;
-    }
-
+    #region GetterSetters
 
     public float SkateSpeed => mySkateSpeed;
 
@@ -354,4 +350,12 @@ public class PlayerController : MonoBehaviour
         get => myInventoryManager;
         set => myInventoryManager = value;
     }
+
+    public bool IsLevelFinished
+    {
+        get => isLevelFinished;
+        set => isLevelFinished = value;
+    }
+
+    #endregion
 }

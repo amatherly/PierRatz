@@ -5,26 +5,25 @@ using UnityEngine;
 
 public class UpgradableItem : MonoBehaviour
 {
-    private static int level = 1;
-    private static int minLevel = 1;
-    private static int maxLevel = 10;
-    private static int[] upgradeCosts;
-    private static int[] upgrades;
-
+    protected int level = 1;
+    private int minLevel = 1;
+    private int maxLevel = 10;
+    private int[] upgradeCosts;
+    private int[] upgrades;
     private bool IsMaxedOut => level == maxLevel;
     private bool CanUpgrade => !IsMaxedOut;
-    [SerializeField]
-    private PlayerController player;
+    [SerializeField] protected PlayerController player;
 
     void Start()
     {
-        player = FindObjectOfType<PlayerController>();
+        // player = FindObjectOfType<PlayerController>();
     }
 
     public virtual void Upgrade()
     {
-        if (CanUpgrade)
+        if (CanUpgrade) 
         {
+            Debug.Log("Attempting to upgrade trucks");
             level += upgrades[level];
             ApplyNewEffects();
         }
@@ -59,13 +58,13 @@ public class UpgradableItem : MonoBehaviour
         set => player = value;
     }
     
-    public static int MinLevel
+    public int MinLevel
     {
         get => minLevel;
         set => minLevel = value;
     }
     
-    public static int[] Upgrades
+    public  int[] Upgrades
     {
         get => upgrades;
         set => upgrades = value;
