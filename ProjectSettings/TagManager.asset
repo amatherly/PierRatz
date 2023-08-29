@@ -7,6 +7,7 @@ TagManager:
   - PickupItem
   - Throwable
   - NPC
+  - PinCollider
   layers:
   - Default
   - TransparentFX
