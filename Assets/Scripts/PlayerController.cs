@@ -5,44 +5,54 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     #region Fields
+    [SerializeField] private static int SPEED_BOOST_SOUND = 2;
 
-    [SerializeField] private readonly float mySkateSpeed = 10;
-    private readonly float myWalkSpeed = 7;
-    public Animator myAnimator;
-    [SerializeField] private AudioSource audioSource;
-    public Transform myCameraTransform;
-    public Transform myCapsuleTransform;
-    public CharacterController myCharacterController;
-    private bool myIsSkating = false;
-    private float myInputMagnitude;
+    [Header("Speed")] [SerializeField] private float gravity;
+    [SerializeField] private float myWalkSpeed = 2;
+    [SerializeField] private float mySkateSpeed = 2;
+    [SerializeField] private float myCurrentSkateSpeed = 0;
+    [SerializeField] private float mySpeedMultiplier = 1f;
+    [SerializeField] private float myMaximumSpeed = 10;
+    [SerializeField] private float minSpeed = 2;
+    [SerializeField] private float myRotationSpeed = 1000;
     [SerializeField] private float truckTightness = 1f;
-    public Rigidbody rb;
-    private bool isLevelFinished = false;
-    private float carryOnSpeed = 10f;
-    private bool canMove = true;
+    [SerializeField] private float myThrowForce = 1000;
+    [SerializeField] private float jumpSpeed = 10f;
+    [SerializeField] private Vector3 offset = new Vector3(0, 1, 0);
 
-    [SerializeField] private readonly float myJumpButtonGracePeriod;
+    [Header("Components")] [SerializeField]
+    private GameObject mySkateboard;
+
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private Item myCurrentThrowable;
+    [SerializeField] private Animator myAnimator;
+    [SerializeField] private Transform myCameraTransform;
+    [SerializeField] private Transform myCapsuleTransform;
+    [SerializeField] private CharacterController myCharacterController;
+    [SerializeField] private Rigidbody rb;
+    [SerializeField] private InventoryManager myInventoryManager;
+
+    [Header("Speed Boost")] [SerializeField]
+    private float speedBoostDuration = 3f; // How long the speed boost lasts
+
+    [SerializeField] private float speedBoostMultiplier = 2f; 
+    private bool isSpeedBoosted = false; 
+    private float speedBoostEndTime; 
+    
+    private bool myIsSkating = false;
+    private bool isLevelFinished = false;
+    private bool canMove = true;
+    private bool myIsThrowing = false;
+
+    private float myJumpButtonGracePeriod;
     private float? myJumpButtonPressedTime;
     private readonly float myJumpSpeed;
     private float? myLastGroundedTime;
-    
-    [SerializeField] private readonly float myMaximumSpeed = 10;
-    public float myOriginalStepOffset;
-    private readonly float myRotationSpeed = 1000;
 
-
-    [SerializeField] public GameObject mySkateboard;
-    private float mySpeedMultiplier = 0.5f;
+    private float myInputMagnitude;
     private float myYSpeed;
-    public float myThrowForce = 1000f;
-    private readonly float mySlope = 1f;
-    public bool myIsThrowing = false;
-    public float myPushCounter = 0;
-    public Item myCurrentThrowable;
-    [SerializeField] public InventoryManager myInventoryManager;
 
     #endregion
-
 
     #region Methods
 
@@ -50,19 +60,32 @@ public class PlayerController : MonoBehaviour
     {
         myAnimator = GetComponent<Animator>();
         myCharacterController = GetComponent<CharacterController>();
-        myOriginalStepOffset = myCharacterController.stepOffset;
         rb = GetComponent<Rigidbody>();
-        
     }
-    
+
     private void Update()
     {
-        mySpeedMultiplier = myIsSkating ? 2f : 1.5f;
-        myYSpeed += Physics.gravity.y * Time.deltaTime * 10;
+        myYSpeed -= gravity * Time.deltaTime;
+
+        AnimatorStateInfo stateInfo = myAnimator.GetCurrentAnimatorStateInfo(0);
+        if (stateInfo.IsName("Skating"))
+        {
+            myIsSkating = true;
+        }
+
+        if (isSpeedBoosted && Time.time >= speedBoostEndTime)
+        {
+            DeactivateSpeedBoost();
+        }
 
         if (myCharacterController.isGrounded)
         {
             myLastGroundedTime = Time.time;
+            myYSpeed = -gravity * Time.deltaTime;  
+        }
+        else
+        {
+            myYSpeed -= gravity * Time.deltaTime; 
         }
 
         if (canMove)
@@ -71,12 +94,16 @@ public class PlayerController : MonoBehaviour
             MoveCharacter();
         }
 
+        if (isSpeedBoosted && Time.time >= speedBoostEndTime)
+        {
+            DeactivateSpeedBoost();
+        }
+
         if (isLevelFinished) CarryOn();
     }
-    
+
     private void AnimateCharacter()
     {
-        Debug.Log("Current Speed: " + rb.velocity.magnitude);
         myAnimator.SetFloat("InputMagnitude", myInputMagnitude);
         mySkateboard.SetActive(myIsSkating);
 
@@ -84,7 +111,6 @@ public class PlayerController : MonoBehaviour
 
         if (myIsSkating && rb.velocity.magnitude < myMaximumSpeed)
         {
-            myAnimator.SetFloat("SkateSpeed", myPushCounter);
             myAnimator.SetBool("isPushing", true);
         }
         else
@@ -97,9 +123,31 @@ public class PlayerController : MonoBehaviour
 
     private void MoveCharacter()
     {
-        float Speed = myInputMagnitude * myMaximumSpeed * mySpeedMultiplier;
         float HorizontalInput = Input.GetAxis("Horizontal");
         float VerticalInput = Input.GetAxis("Vertical");
+        bool isMoving = Math.Abs(HorizontalInput) > 0.1f || Math.Abs(VerticalInput) > 0.1f;
+
+        if (VerticalInput <= 0)
+        {
+            HorizontalInput = 0;
+        }
+
+        if (myIsSkating && isMoving)
+        {
+            myCurrentSkateSpeed = Mathf.Min(myCurrentSkateSpeed + Time.deltaTime, mySkateSpeed);
+        }
+        else
+        {
+            myCurrentSkateSpeed = minSpeed;
+        }
+
+        float Speed = myIsSkating ? myCurrentSkateSpeed : myWalkSpeed;
+        Speed *= VerticalInput * mySpeedMultiplier;
+
+        if (isSpeedBoosted)
+        {
+            Speed *= speedBoostMultiplier;
+        }
 
         Vector3 MovementDirection = new Vector3(HorizontalInput * truckTightness, 0, VerticalInput * mySkateSpeed);
         MovementDirection.Normalize();
@@ -111,13 +159,12 @@ public class PlayerController : MonoBehaviour
         Vector3 Velocity = MovementDirection * Speed;
         Velocity.y = myYSpeed;
 
-        _ = myCharacterController.Move(Velocity * Time.deltaTime);
-
+        myCharacterController.Move(Velocity * Time.deltaTime);
         myAnimator.SetBool("isWalking", VerticalInput != 0);
 
         if (MovementDirection != Vector3.zero)
         {
-            if (!audioSource.isPlaying) audioSource.Play();
+            if (!audioSource.isPlaying && myIsSkating) audioSource.Play();
             Quaternion ToRotation = Quaternion.LookRotation(MovementDirection, Vector3.up);
             transform.rotation =
                 Quaternion.RotateTowards(transform.rotation, ToRotation, myRotationSpeed * Time.deltaTime);
@@ -130,30 +177,10 @@ public class PlayerController : MonoBehaviour
 
     private void Jump()
     {
-        float customGravity = -20f;
-        myYSpeed += customGravity * Time.deltaTime;
-
-        if (Time.time - myLastGroundedTime <= myJumpButtonGracePeriod)
+        if (myCharacterController.isGrounded)
         {
-            myCharacterController.stepOffset = myOriginalStepOffset;
-
-            myYSpeed = -0.9f;
-
-            if (Time.time - myJumpButtonPressedTime <= myJumpButtonGracePeriod)
-            {
-                myYSpeed = myJumpSpeed;
-                myJumpButtonPressedTime = null;
-                myLastGroundedTime = null;
-            }
+            myYSpeed = jumpSpeed;  // Set vertical speed to jumpSpeed when grounded and jump is pressed
         }
-        else
-        {
-            myCharacterController.stepOffset = 0;
-        }
-
-        // Apply the vertical movement
-        Vector3 move = new Vector3(0, myYSpeed, 0);
-        myCharacterController.Move(move * Time.deltaTime);
     }
 
     private void RotateToPlaneNormal()
@@ -175,48 +202,51 @@ public class PlayerController : MonoBehaviour
 
     private void CheckForInput()
     {
-        if (Input.GetKeyDown(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+        if (Input.GetKeyDown(KeyCode.Space))
         {
-            myInputMagnitude /= 2;
-        }
-
-        else if (Input.GetKeyDown(KeyCode.Tab))
-        {
-            myIsSkating = !myIsSkating;
-            myAnimator.SetBool("isSkating", myIsSkating);
-        }
-
-        else if (Input.GetButtonDown("Jump"))
-        {
-            ThrowItem();
             myAnimator.SetTrigger("Throw");
+            ThrowItem();
         }
-
-        else if (Input.GetButtonDown("Jump") || Input.GetKey(KeyCode.Space))
+        else if (Input.GetKeyDown(KeyCode.E))
         {
             myJumpButtonPressedTime = Time.time;
             myAnimator.SetTrigger("Ollie");
+            Jump();
         }
     }
-    
+
     public void ThrowItem()
     {
-        //if (theItem != null  && theItem.myIsThrowable)
-        //{
         Vector3 throwDirection = transform.forward;
+
         GameObject thrownObject =
-            Instantiate(myCurrentThrowable.myThrownObjectPrefab, transform.position, transform.rotation);
+            Instantiate(myCurrentThrowable.myThrownObjectPrefab, transform.position + offset, transform.rotation);
         Rigidbody thrownObjectRigidbody = thrownObject.GetComponent<Rigidbody>();
         thrownObjectRigidbody.useGravity = true;
-        thrownObjectRigidbody.AddForce(throwDirection * 60, ForceMode.Impulse);
-        thrownObjectRigidbody.AddTorque(throwDirection * myCurrentThrowable.myThrowForce, ForceMode.Impulse);
-        //}
+        thrownObjectRigidbody.AddForce(throwDirection * myThrowForce, ForceMode.Impulse);
+        thrownObjectRigidbody.AddTorque(throwDirection * myThrowForce, ForceMode.Impulse);
+    }
+
+    public void ActivateSpeedBoost()
+    {
+        GameManager.GAME.SoundManager.PlaySound(SPEED_BOOST_SOUND);
+        isSpeedBoosted = true;
+        mySpeedMultiplier += .5f;
+        speedBoostEndTime = Time.time + speedBoostDuration;
+        mySkateSpeed++;
+        myMaximumSpeed++;
+        minSpeed++;
+    }
+
+    private void DeactivateSpeedBoost()
+    {
+        isSpeedBoosted = false;
     }
 
     public void CarryOn()
     {
         canMove = false;
-        transform.position += transform.forward * carryOnSpeed * Time.deltaTime;
+        transform.position += transform.forward * CurrentSkateSpeed * Time.deltaTime;
     }
 
     #endregion
@@ -293,12 +323,6 @@ public class PlayerController : MonoBehaviour
 
     public float MaximumSpeed => myMaximumSpeed;
 
-    public float OriginalStepOffset
-    {
-        get => myOriginalStepOffset;
-        set => myOriginalStepOffset = value;
-    }
-
     public float RotationSpeed => myRotationSpeed;
 
     public GameObject Skateboard
@@ -325,18 +349,10 @@ public class PlayerController : MonoBehaviour
         set => myThrowForce = value;
     }
 
-    public float Slope => mySlope;
-
     public bool IsThrowing
     {
         get => myIsThrowing;
         set => myIsThrowing = value;
-    }
-
-    public float PushCounter
-    {
-        get => myPushCounter;
-        set => myPushCounter = value;
     }
 
     public Item CurrentThrowable
@@ -355,6 +371,60 @@ public class PlayerController : MonoBehaviour
     {
         get => isLevelFinished;
         set => isLevelFinished = value;
+    }
+
+    public float Gravity
+    {
+        get => gravity;
+        set => gravity = value;
+    }
+
+    public float CurrentSkateSpeed
+    {
+        get => myCurrentSkateSpeed;
+        set => myCurrentSkateSpeed = value;
+    }
+
+    public float CarryOnSpeed
+    {
+        get => carryOnSpeed;
+        set => carryOnSpeed = value;
+    }
+
+    public float MinSpeed
+    {
+        get => minSpeed;
+        set => minSpeed = value;
+    }
+
+    public float TruckTightness1
+    {
+        get => truckTightness;
+        set => truckTightness = value;
+    }
+
+    public AudioSource AudioSource
+    {
+        get => audioSource;
+        set => audioSource = value;
+    }
+
+    public Rigidbody Rb1
+    {
+        get => rb;
+        set => rb = value;
+    }
+
+    public bool IsLevelFinished1
+    {
+        get => isLevelFinished;
+        set => isLevelFinished = value;
+    }
+
+    public bool CanMove
+    {
+        get => canMove;
+        set => canMove = value;
     }
 
     #endregion

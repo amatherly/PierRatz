@@ -15,6 +15,6 @@ MonoBehaviour:
   myName: Pizza
   myType: 1
   myCount: 100
-  myIsThrowable: 0
+  myIsThrowable: 1
   myThrownObjectPrefab: {fileID: 515513407981081957, guid: 50624530b3bf0524bb8275d4ed75242a, type: 3}
-  myThrowForce: 0
+  myThrowForce: 100
