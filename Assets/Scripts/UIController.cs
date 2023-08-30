@@ -3,12 +3,11 @@ using System.Collections.Generic;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class UIController : MonoBehaviour
 {
-
-    [SerializeField]
-    private TMP_Text bankMoney;
+    [SerializeField] private TMP_Text bankMoney;
 
     // [SerializeField] private HUD _HUD;
     
@@ -24,6 +23,12 @@ public class UIController : MonoBehaviour
     void Update()
     {
         
+    }
+
+    public void LoadNextLevel()
+    {
+        Debug.Log("Loading level: " + SceneManager.GetActiveScene().buildIndex + 1);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
     }
 
     public void SetBankUI()

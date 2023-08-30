@@ -39,7 +39,7 @@ public class Pin : MonoBehaviour
         {
             Debug.Log("hitPin");
             Vector3 explosionPos = other.contacts[0].point;
-            rb.AddExplosionForce(force * player.CurrentSkateSpeed, player.transform.forward, radius, upForce, ForceMode.Force);
+            // rb.AddExplosionForce(force * player.CurrentSkateSpeed, player.transform.forward, radius, upForce, ForceMode.Force);
             rb.AddRelativeForce(transform.forward * force, ForceMode.Impulse);
         }
         audioSource.PlayOneShot(audioClip);

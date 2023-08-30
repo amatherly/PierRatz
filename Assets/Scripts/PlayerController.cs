@@ -1,41 +1,38 @@
 using System;
-using UnityEditor;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    #region Fields
-
     [SerializeField] private static int SPEED_BOOST_SOUND = 2;
+    [SerializeField] private static int THROW_SOUND = 3;
+    [SerializeField] private static int JUMP_SOUND = 2;
 
-    [Header("Speed")] [SerializeField] private float gravity;
-    [SerializeField] private float myWalkSpeed = 2;
-    [SerializeField] private float mySkateSpeed = 2;
-    [SerializeField] private float myCurrentSkateSpeed = 0;
-    [SerializeField] private float mySpeedMultiplier = 1f;
-    [SerializeField] private float myMaximumSpeed = 10;
-    [SerializeField] private float minSpeed = 2;
-    [SerializeField] private float myRotationSpeed = 1000;
-    [SerializeField] private float truckTightness = 1f;
-    [SerializeField] private float myThrowForce = 1000;
-    [SerializeField] private float jumpSpeed = 10f;
-    [SerializeField] private Vector3 offset = new Vector3(0, 1, 0); 
-    [SerializeField] private float verticalOffset = -1.7f;  
+
+    [Header("Movement")] [SerializeField] private float currentSkateSpeed;
+    [SerializeField] private float gravity = 9.81f;
     [SerializeField] private float horizontalOffset = 0.38f;
+    [SerializeField] private float jumpForce = 10f;
+    [SerializeField] private Vector3 movement;
+    [SerializeField] private float rotationSpeed;
+    [SerializeField] private float maxSpeed;
+    [SerializeField] private float minSpeed;
+    [SerializeField] private float skateSpeed;
+    [SerializeField] private float speedMultiplier;
+    [SerializeField] private float throwForce;
+    [SerializeField] private float truckTightness;
+    [SerializeField] private float verticalOffset = -1.7f;
+    [SerializeField] private float walkSpeed;
 
 
     [Header("Components")] [SerializeField]
-    private GameObject mySkateboard;
+    private GameObject skateboard;
 
     [SerializeField] private AudioSource audioSource;
-    [SerializeField] private Item myCurrentThrowable;
-    [SerializeField] private Animator myAnimator;
-    [SerializeField] private Transform myCameraTransform;
-    [SerializeField] private Transform myCapsuleTransform;
-    [SerializeField] private CharacterController myCharacterController;
+    [SerializeField] private Item currentThrowable;
+    [SerializeField] private Animator animator;
     [SerializeField] private Rigidbody rb;
-    [SerializeField] private InventoryManager myInventoryManager;
-    [SerializeField] private Transform leftFoot;  // Set these in the editor or find them by name/tag
+    [SerializeField] private InventoryManager inventoryManager;
+    [SerializeField] private Transform leftFoot; // Set these in the editor or find them by name/tag
     [SerializeField] private Transform rightFoot;
     private GameObject skateboardParent;
 
@@ -46,69 +43,58 @@ public class PlayerController : MonoBehaviour
     private bool isSpeedBoosted = false;
     private float speedBoostEndTime;
 
-    private bool myIsSkating = false;
-    private bool isLevelFinished = false;
+    [Header("Ground Check Settings")] [SerializeField]
+    private Transform groundCheck;
+
+    [SerializeField] private float groundDistance = 0.4f;
+    [SerializeField] private LayerMask groundMask;
+
+
+    private bool isSkating = false;
+    private bool isGrounded = false;
+
     private bool canMove = true;
-    private bool myIsThrowing = false;
-
-    private float myJumpButtonGracePeriod;
-    private float? myJumpButtonPressedTime;
-    private readonly float myJumpSpeed;
-    private float? myLastGroundedTime;
-
-    private float myInputMagnitude;
-    private float myYSpeed;
-
-    #endregion
-
-    #region Methods
+    private bool isLevelFinished = false;
+    private float inputMagnitude;
+    private Vector3 velocity;
 
     private void Start()
     {
-        myAnimator = GetComponent<Animator>();
-        myCharacterController = GetComponent<CharacterController>();
+        animator = GetComponent<Animator>();
         rb = GetComponent<Rigidbody>();
         skateboardParent = new GameObject("SkateboardParent");
-        skateboardParent.transform.SetParent(transform); 
+        skateboardParent.transform.SetParent(transform);
         UpdateSkateboardParentPosition();
-        mySkateboard.transform.SetParent(skateboardParent.transform);
+        skateboard.transform.SetParent(skateboardParent.transform);
     }
 
     private void Update()
     {
         UpdateSkateboardParentPosition();
-
-        AnimatorStateInfo stateInfo = myAnimator.GetCurrentAnimatorStateInfo(0);
-        if (stateInfo.IsName("Skating"))
-        {
-            myIsSkating = true;
-        }
+        AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+        skateboard.SetActive(!stateInfo.IsName("Moving"));
 
         if (isSpeedBoosted && Time.time >= speedBoostEndTime)
         {
             DeactivateSpeedBoost();
-        }
-
-        if (myCharacterController.isGrounded)
-        {
-            myLastGroundedTime = Time.time;
-            myYSpeed = -gravity * Time.deltaTime;
         }
 
         if (canMove)
         {
             CheckForInput();
+        }
+    }
+
+    private void FixedUpdate()
+    {
+        isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+
+        if (CanMove)
+        {
             MoveCharacter();
         }
-
-        if (isSpeedBoosted && Time.time >= speedBoostEndTime)
-        {
-            DeactivateSpeedBoost();
-        }
-
-        if (isLevelFinished) CarryOn();
     }
-    
+
     private void UpdateSkateboardParentPosition()
     {
         Vector3 midpoint = (leftFoot.position + rightFoot.position) / 2;
@@ -117,136 +103,62 @@ public class PlayerController : MonoBehaviour
         skateboardParent.transform.position = midpoint;
     }
 
-    private void AnimateCharacter()
-    {
-        myAnimator.SetFloat("InputMagnitude", myInputMagnitude);
-        mySkateboard.SetActive(myIsSkating);
-
-        _ = myCharacterController.velocity.magnitude;
-        myAnimator.SetBool("isSkating", myIsSkating);
-    }
-
     private void MoveCharacter()
     {
-        float HorizontalInput = Input.GetAxis("Horizontal");
-        float VerticalInput = Input.GetAxis("Vertical");
-        bool isMoving = Math.Abs(HorizontalInput) > 0.1f || Math.Abs(VerticalInput) > 0.1f;
+        float horizontalInput = Input.GetAxis("Horizontal");
+        Vector3 forceToAdd = new Vector3(horizontalInput * TruckTightness, 0f, SkateSpeed);
 
-        if (VerticalInput <= 0)
+        forceToAdd.Normalize();
+        forceToAdd *= SkateSpeed;
+
+        rb.AddForce(forceToAdd, ForceMode.VelocityChange);
+        rb.AddForce(new Vector3(0, -gravity, 0), ForceMode.Acceleration);
+
+
+        if (rb.velocity.magnitude > maxSpeed)
         {
-            HorizontalInput = 0;
+            rb.velocity = Vector3.Lerp(rb.velocity, rb.velocity.normalized * maxSpeed, 0.2f);
         }
 
-        if (myIsSkating && isMoving)
+        if (forceToAdd != Vector3.zero)
         {
-            myCurrentSkateSpeed = Mathf.Min(myCurrentSkateSpeed + Time.deltaTime, mySkateSpeed);
-        }
-        else
-        {
-            myCurrentSkateSpeed = minSpeed;
-        }
-
-        float Speed = myIsSkating ? myCurrentSkateSpeed : myWalkSpeed;
-        Speed *= VerticalInput * mySpeedMultiplier;
-
-        if (isSpeedBoosted)
-        {
-            Speed *= speedBoostMultiplier;
-        }
-
-        Vector3 MovementDirection = new Vector3(HorizontalInput * truckTightness, 0, VerticalInput * mySkateSpeed);
-        MovementDirection.Normalize();
-        myInputMagnitude = Mathf.Clamp01(MovementDirection.magnitude);
-
-        AnimateCharacter();
-        RotateToPlaneNormal();
-
-        myYSpeed -= gravity * Time.deltaTime;
-        if (myCharacterController.isGrounded)
-        {
-            myYSpeed = -gravity * Time.deltaTime;
-        }
-
-        Vector3 Velocity = MovementDirection * Speed;
-        Velocity.y = myYSpeed;
-
-        myCharacterController.Move(Velocity * Time.deltaTime);
-        myAnimator.SetBool("isWalking", VerticalInput != 0);
-
-        if (MovementDirection != Vector3.zero)
-        {
-            if (!audioSource.isPlaying && myIsSkating) audioSource.Play();
-            Quaternion ToRotation = Quaternion.LookRotation(MovementDirection, Vector3.up);
+            Quaternion toRotation = Quaternion.LookRotation(forceToAdd, Vector3.up);
             transform.rotation =
-                Quaternion.RotateTowards(transform.rotation, ToRotation, myRotationSpeed * Time.deltaTime);
+                Quaternion.RotateTowards(transform.rotation, toRotation, RotationSpeed * Time.deltaTime);
         }
-        else
-        {
-            audioSource.Pause();
-        }
-    }
-
-    private void Jump()
-    {
-        // if (myCharacterController.isGrounded)
-        // {
-        //     myYSpeed = jumpSpeed; // Set vertical speed to jumpSpeed when grounded and jump is pressed
-        // }
-    }
-
-    private void RotateToPlaneNormal()
-    {
-        // // Raycast downward to detect the plane
-        // if (Physics.Raycast(transform.position, -transform.up, out RaycastHit Hit))
-        // {
-        //     if (Hit.transform.tag == "Ground")
-        //     {
-        //         // Calculate the rotation needed to align with the plane normal
-        //         Quaternion TargetRotation = Quaternion.FromToRotation(myCapsuleTransform.up, Hit.normal) *
-        //                              myCapsuleTransform.rotation;
-        //
-        //         // Smoothly rotate the capsule towards the target rotation
-        //         myCapsuleTransform.rotation = TargetRotation;
-        //     }
-        // }
     }
 
     private void CheckForInput()
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            myAnimator.SetTrigger("Throw");
+            animator.SetTrigger("Throw");
             ThrowItem();
         }
-        else if (Input.GetKeyDown(KeyCode.E))
+
+        if (Input.GetKeyDown(KeyCode.E) && isGrounded)
         {
-            myJumpButtonPressedTime = Time.time;
-            myAnimator.SetTrigger("Ollie");
-            Jump();
+            animator.SetTrigger("Ollie");
+            rb.AddForce(new Vector3(0, jumpForce, 0), ForceMode.Impulse);
+            GameManager.GAME.SoundManager.PlaySound(JUMP_SOUND);
         }
     }
 
-    public void ThrowItem()
+    private void ThrowItem()
     {
         Vector3 throwDirection = transform.forward;
-
         GameObject thrownObject =
-            Instantiate(myCurrentThrowable.myThrownObjectPrefab, transform.position + offset, transform.rotation);
+            Instantiate(currentThrowable.myThrownObjectPrefab, transform.position, transform.rotation);
         Rigidbody thrownObjectRigidbody = thrownObject.GetComponent<Rigidbody>();
         thrownObjectRigidbody.useGravity = true;
-        thrownObjectRigidbody.AddForce(throwDirection * myThrowForce, ForceMode.Impulse);
-        thrownObjectRigidbody.AddTorque(throwDirection * myThrowForce, ForceMode.Impulse);
+        thrownObjectRigidbody.AddForce(throwDirection * throwForce, ForceMode.Impulse);
     }
 
     public void ActivateSpeedBoost()
     {
+        rb.AddForce(transform.position * speedBoostMultiplier, ForceMode.Impulse);
         GameManager.GAME.SoundManager.PlaySound(SPEED_BOOST_SOUND);
         isSpeedBoosted = true;
-        mySpeedMultiplier += .5f;
-        speedBoostEndTime = Time.time + speedBoostDuration;
-        mySkateSpeed++;
-        myMaximumSpeed++;
-        minSpeed++;
     }
 
     private void DeactivateSpeedBoost()
@@ -260,54 +172,49 @@ public class PlayerController : MonoBehaviour
         transform.position += transform.forward * CurrentSkateSpeed * Time.deltaTime;
     }
 
-    #endregion
-
-    #region GetterSetters
-
-    public float SkateSpeed => mySkateSpeed;
-
-    public float WalkSpeed => myWalkSpeed;
-
-    public Animator Animator
+    public bool IsLevelFinished
     {
-        get => myAnimator;
-        set => myAnimator = value;
+        get => isLevelFinished;
+        set => isLevelFinished = value;
+    }
+    
+    public float SpeedMultiplier
+    {
+        get => speedMultiplier;
+        set => speedMultiplier = value;
+    }
+    
+    public float SkateSpeed
+    {
+        get => skateSpeed;
+        set => skateSpeed = value;
     }
 
-    public Transform CameraTransform
+    public float CurrentSkateSpeed
     {
-        get => myCameraTransform;
-        set => myCameraTransform = value;
+        get => currentSkateSpeed;
+        set => currentSkateSpeed = value;
     }
-
-    public Transform CapsuleTransform
+    public float MinSpeed
     {
-        get => myCapsuleTransform;
-        set => myCapsuleTransform = value;
+        get => minSpeed;
+        set => minSpeed = value;
     }
-
-    public CharacterController CharacterController
+    public float RotationSpeed
     {
-        get => myCharacterController;
-        set => myCharacterController = value;
+        get => rotationSpeed;
+        set => rotationSpeed = value;
     }
-
-    public bool IsSkating
-    {
-        get => myIsSkating;
-        set => myIsSkating = value;
-    }
-
-    public float InputMagnitude
-    {
-        get => myInputMagnitude;
-        set => myInputMagnitude = value;
-    }
-
     public float TruckTightness
     {
         get => truckTightness;
         set => truckTightness = value;
+    }
+    
+    public Animator Animator
+    {
+        get => animator;
+        set => animator = value;
     }
 
     public Rigidbody Rb
@@ -315,122 +222,10 @@ public class PlayerController : MonoBehaviour
         get => rb;
         set => rb = value;
     }
-
-    public float JumpButtonGracePeriod => myJumpButtonGracePeriod;
-
-    public float? JumpButtonPressedTime
-    {
-        get => myJumpButtonPressedTime;
-        set => myJumpButtonPressedTime = value;
-    }
-
-    public float JumpSpeed => myJumpSpeed;
-
-    public float? LastGroundedTime
-    {
-        get => myLastGroundedTime;
-        set => myLastGroundedTime = value;
-    }
-
-    public float MaximumSpeed => myMaximumSpeed;
-
-    public float RotationSpeed => myRotationSpeed;
-
-    public GameObject Skateboard
-    {
-        get => mySkateboard;
-        set => mySkateboard = value;
-    }
-
-    public float SpeedMultiplier
-    {
-        get => mySpeedMultiplier;
-        set => mySpeedMultiplier = value;
-    }
-
-    public float YSpeed
-    {
-        get => myYSpeed;
-        set => myYSpeed = value;
-    }
-
-    public float ThrowForce
-    {
-        get => myThrowForce;
-        set => myThrowForce = value;
-    }
-
-    public bool IsThrowing
-    {
-        get => myIsThrowing;
-        set => myIsThrowing = value;
-    }
-
-    public Item CurrentThrowable
-    {
-        get => myCurrentThrowable;
-        set => myCurrentThrowable = value;
-    }
-
-    public InventoryManager InventoryManager
-    {
-        get => myInventoryManager;
-        set => myInventoryManager = value;
-    }
-
-    public bool IsLevelFinished
-    {
-        get => isLevelFinished;
-        set => isLevelFinished = value;
-    }
-
-    public float Gravity
-    {
-        get => gravity;
-        set => gravity = value;
-    }
-
-    public float CurrentSkateSpeed
-    {
-        get => myCurrentSkateSpeed;
-        set => myCurrentSkateSpeed = value;
-    }
-
-    public float MinSpeed
-    {
-        get => minSpeed;
-        set => minSpeed = value;
-    }
-
-    public float TruckTightness1
-    {
-        get => truckTightness;
-        set => truckTightness = value;
-    }
-
-    public AudioSource AudioSource
-    {
-        get => audioSource;
-        set => audioSource = value;
-    }
-
-    public Rigidbody Rb1
-    {
-        get => rb;
-        set => rb = value;
-    }
-
-    public bool IsLevelFinished1
-    {
-        get => isLevelFinished;
-        set => isLevelFinished = value;
-    }
-
+    
     public bool CanMove
     {
         get => canMove;
         set => canMove = value;
     }
-
-    #endregion
 }

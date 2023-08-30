@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class UpgradableItem : MonoBehaviour
 {
-    protected int level = 1;
+    protected static int level = 1;
     private int minLevel = 1;
     private int maxLevel = 10;
     private int[] upgradeCosts;

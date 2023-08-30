@@ -28,7 +28,7 @@ public class LevelController : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("PinCollider"))
+        if (other.CompareTag("Player"))
         {
             GameManager.GAME.Camera.Follow = null;
             GameManager.GAME.Camera.m_Orbits[1].m_Height = 10;

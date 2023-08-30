@@ -5,10 +5,15 @@ using UnityEngine;
 
 public class Bank : MonoBehaviour
 {
-    public float Money => money;
-    public object Sounds { get; }
+    
+    private static int money = 0;
 
-    private int money = 0;
+    private void Awake()
+    {
+        DontDestroyOnLoad(this.gameObject);
+        LoadMoney();
+    }
+    
     
     public void AddToBank(int value)
     {
@@ -29,4 +34,18 @@ public class Bank : MonoBehaviour
 
         return false;
     }
+    
+
+    public void SaveMoney()
+    {
+        PlayerPrefs.SetInt("Money", money);
+    }
+
+    public void LoadMoney()
+    {
+        money = PlayerPrefs.GetInt("Money", 0);
+    }
+    
+    public float Money => money;
+    public object Sounds { get; }
 }

@@ -11,12 +11,12 @@ public class GameManager : MonoBehaviour
 
     public static GameManager GAME = null;
 
-    [SerializeField] private PlayerController player;
-    [SerializeField] private Bank BANK;
-    [SerializeField] private LevelController lvlController;
-    [SerializeField] private CinemachineFreeLook camera;
-    [SerializeField] private UIController UI_Controller;
-    [SerializeField] private SoundManager soundManager;
+    [SerializeField] private  PlayerController player;
+    [SerializeField] private  Bank BANK;
+    [SerializeField] private  LevelController lvlController;
+    [SerializeField] private  CinemachineFreeLook camera;
+    [SerializeField] private  UIController UI_Controller;
+    [SerializeField] private  SoundManager soundManager;
 
     private void Awake()
     {
@@ -32,7 +32,7 @@ public class GameManager : MonoBehaviour
 
     public void ReloadGame()
     {
-        SceneManager.LoadScene("Game");
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     void Start()
