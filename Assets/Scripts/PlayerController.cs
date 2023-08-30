@@ -5,6 +5,7 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     #region Fields
+
     [SerializeField] private static int SPEED_BOOST_SOUND = 2;
 
     [Header("Speed")] [SerializeField] private float gravity;
@@ -18,7 +19,10 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float truckTightness = 1f;
     [SerializeField] private float myThrowForce = 1000;
     [SerializeField] private float jumpSpeed = 10f;
-    [SerializeField] private Vector3 offset = new Vector3(0, 1, 0);
+    [SerializeField] private Vector3 offset = new Vector3(0, 1, 0); 
+    [SerializeField] private float verticalOffset = -1.7f;  
+    [SerializeField] private float horizontalOffset = 0.38f;
+
 
     [Header("Components")] [SerializeField]
     private GameObject mySkateboard;
@@ -31,14 +35,17 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private CharacterController myCharacterController;
     [SerializeField] private Rigidbody rb;
     [SerializeField] private InventoryManager myInventoryManager;
+    [SerializeField] private Transform leftFoot;  // Set these in the editor or find them by name/tag
+    [SerializeField] private Transform rightFoot;
+    private GameObject skateboardParent;
 
     [Header("Speed Boost")] [SerializeField]
     private float speedBoostDuration = 3f; // How long the speed boost lasts
 
-    [SerializeField] private float speedBoostMultiplier = 2f; 
-    private bool isSpeedBoosted = false; 
-    private float speedBoostEndTime; 
-    
+    [SerializeField] private float speedBoostMultiplier = 2f;
+    private bool isSpeedBoosted = false;
+    private float speedBoostEndTime;
+
     private bool myIsSkating = false;
     private bool isLevelFinished = false;
     private bool canMove = true;
@@ -61,11 +68,15 @@ public class PlayerController : MonoBehaviour
         myAnimator = GetComponent<Animator>();
         myCharacterController = GetComponent<CharacterController>();
         rb = GetComponent<Rigidbody>();
+        skateboardParent = new GameObject("SkateboardParent");
+        skateboardParent.transform.SetParent(transform); 
+        UpdateSkateboardParentPosition();
+        mySkateboard.transform.SetParent(skateboardParent.transform);
     }
 
     private void Update()
     {
-        myYSpeed -= gravity * Time.deltaTime;
+        UpdateSkateboardParentPosition();
 
         AnimatorStateInfo stateInfo = myAnimator.GetCurrentAnimatorStateInfo(0);
         if (stateInfo.IsName("Skating"))
@@ -81,11 +92,7 @@ public class PlayerController : MonoBehaviour
         if (myCharacterController.isGrounded)
         {
             myLastGroundedTime = Time.time;
-            myYSpeed = -gravity * Time.deltaTime;  
-        }
-        else
-        {
-            myYSpeed -= gravity * Time.deltaTime; 
+            myYSpeed = -gravity * Time.deltaTime;
         }
 
         if (canMove)
@@ -101,6 +108,14 @@ public class PlayerController : MonoBehaviour
 
         if (isLevelFinished) CarryOn();
     }
+    
+    private void UpdateSkateboardParentPosition()
+    {
+        Vector3 midpoint = (leftFoot.position + rightFoot.position) / 2;
+        midpoint.y += verticalOffset;
+        midpoint.x += horizontalOffset;
+        skateboardParent.transform.position = midpoint;
+    }
 
     private void AnimateCharacter()
     {
@@ -108,16 +123,6 @@ public class PlayerController : MonoBehaviour
         mySkateboard.SetActive(myIsSkating);
 
         _ = myCharacterController.velocity.magnitude;
-
-        if (myIsSkating && rb.velocity.magnitude < myMaximumSpeed)
-        {
-            myAnimator.SetBool("isPushing", true);
-        }
-        else
-        {
-            myAnimator.SetBool("isPushing", false);
-        }
-
         myAnimator.SetBool("isSkating", myIsSkating);
     }
 
@@ -156,6 +161,12 @@ public class PlayerController : MonoBehaviour
         AnimateCharacter();
         RotateToPlaneNormal();
 
+        myYSpeed -= gravity * Time.deltaTime;
+        if (myCharacterController.isGrounded)
+        {
+            myYSpeed = -gravity * Time.deltaTime;
+        }
+
         Vector3 Velocity = MovementDirection * Speed;
         Velocity.y = myYSpeed;
 
@@ -177,10 +188,10 @@ public class PlayerController : MonoBehaviour
 
     private void Jump()
     {
-        if (myCharacterController.isGrounded)
-        {
-            myYSpeed = jumpSpeed;  // Set vertical speed to jumpSpeed when grounded and jump is pressed
-        }
+        // if (myCharacterController.isGrounded)
+        // {
+        //     myYSpeed = jumpSpeed; // Set vertical speed to jumpSpeed when grounded and jump is pressed
+        // }
     }
 
     private void RotateToPlaneNormal()
@@ -383,12 +394,6 @@ public class PlayerController : MonoBehaviour
     {
         get => myCurrentSkateSpeed;
         set => myCurrentSkateSpeed = value;
-    }
-
-    public float CarryOnSpeed
-    {
-        get => carryOnSpeed;
-        set => carryOnSpeed = value;
     }
 
     public float MinSpeed
