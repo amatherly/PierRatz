@@ -5,16 +5,25 @@ using UnityEngine;
 
 public class Bank : MonoBehaviour
 {
-    
     private static int money = 0;
+
+    public static Bank Instance { get; private set; }
 
     private void Awake()
     {
-        DontDestroyOnLoad(this.gameObject);
-        LoadMoney();
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+            LoadMoney();
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
-    
-    
+
+
     public void AddToBank(int value)
     {
         money += value;
@@ -23,7 +32,7 @@ public class Bank : MonoBehaviour
     public bool Buy(UpgradableItem item)
     {
         int tempMoney = money - item.UpgradeCosts[item.Level];
-        
+
         if (tempMoney >= 0)
         {
             item.Upgrade();
@@ -34,7 +43,7 @@ public class Bank : MonoBehaviour
 
         return false;
     }
-    
+
 
     public void SaveMoney()
     {
@@ -45,7 +54,7 @@ public class Bank : MonoBehaviour
     {
         money = PlayerPrefs.GetInt("Money", 0);
     }
-    
-    public float Money => money;
+
+    public int Money => money;
     public object Sounds { get; }
 }

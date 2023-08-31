@@ -7,8 +7,22 @@ public class SoundManager : MonoBehaviour
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip[] sounds;
     [SerializeField] private Hashtable soundTable = new Hashtable();
+    public static SoundManager Instance { get; private set; }
 
     void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    public void Start()
     {
         audioSource = GetComponent<AudioSource>();
         for (int i = 0; i < sounds.Length; i++)
@@ -22,10 +36,6 @@ public class SoundManager : MonoBehaviour
         audioSource.PlayOneShot(sounds[soundID]);
     }
 
-
-    void Start()
-    {
-    }
 
     void Update()
     {

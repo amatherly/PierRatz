@@ -16,7 +16,22 @@ public class LevelController : MonoBehaviour
 
     private int count = 0;
 
+    public static LevelController Instance { get; private set; }
 
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+   
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+    
     void Start()
     {
         InitializePins();
@@ -47,23 +62,11 @@ public class LevelController : MonoBehaviour
         yield return new WaitForSeconds(waitTime);
         pinController.CheckPins();
     }
-
-    public void Pause()
-    {
-    }
-
-    public void Resume()
-    {
-    }
-
-    public void RestartLevel()
-    {
-        SceneManager.LoadScene("game");
-    }
     
+
     public void NextLevel()
     {
-  
+        GameManager.GAME.LoadNextSceneWithLoadingScreen();
     }
 
     public void InitializePins()

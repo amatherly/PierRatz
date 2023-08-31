@@ -39,7 +39,7 @@ public class PlayerController : MonoBehaviour
     [Header("Speed Boost")] [SerializeField]
     private float speedBoostDuration = 3f; // How long the speed boost lasts
 
-    [SerializeField] private float speedBoostMultiplier = 2f;
+    [SerializeField] private float speedBoostMultiplier;
     private bool isSpeedBoosted = false;
     private float speedBoostEndTime;
 
@@ -57,7 +57,21 @@ public class PlayerController : MonoBehaviour
     private bool isLevelFinished = false;
     private float inputMagnitude;
     private Vector3 velocity;
+    
+    public static PlayerController Instance { get; private set; }
 
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
     private void Start()
     {
         animator = GetComponent<Animator>();
@@ -156,7 +170,7 @@ public class PlayerController : MonoBehaviour
 
     public void ActivateSpeedBoost()
     {
-        rb.AddForce(transform.position * speedBoostMultiplier, ForceMode.Impulse);
+        rb.AddForce(transform.forward * speedBoostMultiplier, ForceMode.Impulse);
         GameManager.GAME.SoundManager.PlaySound(SPEED_BOOST_SOUND);
         isSpeedBoosted = true;
     }
