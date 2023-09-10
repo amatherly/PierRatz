@@ -9,18 +9,13 @@ public class LoadingScreenController : MonoBehaviour
     [SerializeField, Tooltip("Reference to the Slider UI component")]
     private Slider progressBar;
 
-    private static int sceneToLoad = -1;
+    private static int sceneToLoad = 3;
 
     private void Start()
     {
-        if (sceneToLoad != -1)
-        {
-            StartCoroutine(LoadSceneAsync());
-        }
-        else
-        {
-            Debug.LogError("sceneToLoad is not set. Cannot proceed with loading.");
-        }
+        Debug.Log("LoadingScreenController started, scene to load: " + sceneToLoad);
+        StartCoroutine(LoadSceneAsync());
+        
     }
 
     private IEnumerator LoadSceneAsync()
@@ -44,6 +39,7 @@ public class LoadingScreenController : MonoBehaviour
 
     public static void LoadScene(int buildIndex)
     {
+        Debug.Log("Loading scene with build index: " + buildIndex);
         sceneToLoad = buildIndex;
         SceneManager.LoadScene("LoadingScreen");
     }

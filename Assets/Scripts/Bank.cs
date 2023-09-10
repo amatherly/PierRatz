@@ -6,24 +6,22 @@ using UnityEngine;
 public class Bank : MonoBehaviour
 {
     private static int money = 0;
-
-    public static Bank Instance { get; private set; }
+    
+    public static Bank Instance;
 
     private void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
-            LoadMoney();
+            DontDestroyOnLoad(this.gameObject);
         }
-        else
+        else if (Instance != this)
         {
-            Destroy(gameObject);
+            Destroy(this.gameObject);
         }
     }
-
-
+    
     public void AddToBank(int value)
     {
         money += value;

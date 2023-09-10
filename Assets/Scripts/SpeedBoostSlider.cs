@@ -4,22 +4,17 @@ using UnityEngine.UI;
 public class SpeedBoostSlider : MonoBehaviour
 {
     [Header("UI Components")]
-    public Slider speedBoostSlider;  // The UI Slider
-    public Image boostZoneImage;  // The Image component representing the boost zone
-    public float hotZoneWidth = 0.2f;  // The width of the hot zone on the slider
+    public Slider speedBoostSlider;
+    public Image boostZoneImage;
+    public float hotZoneWidth = 0.2f;
 
-    [Header("Speed")]
-    public float normalSpeed = 5f;
-    public float boostedSpeed = 10f;
-    public float speedBoostDuration = 2f;  // How long the speed boost lasts
-
-    private float hotZoneMin;  // The start of the hot zone on the slider
-    private float hotZoneMax;  // The end of the hot zone on the slider
+    private float hotZoneMin;
+    private float hotZoneMax;
+    private float direction = 1f;
 
     private bool isBoosted = false;
     private float boostEndTime;
 
-    private float direction = 1f;
 
     private void Start()
     {
@@ -39,7 +34,7 @@ public class SpeedBoostSlider : MonoBehaviour
             if (speedBoostSlider.value >= hotZoneMin && speedBoostSlider.value <= hotZoneMax)
             {
                 Debug.Log("You hit it!");
-                GameManager.GAME.Player.ActivateSpeedBoost();
+                FindObjectOfType<PlayerController>().ActivateSpeedBoost();
                 this.gameObject.SetActive(false);
             }
             else

@@ -7,18 +7,19 @@ public class SoundManager : MonoBehaviour
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip[] sounds;
     [SerializeField] private Hashtable soundTable = new Hashtable();
-    public static SoundManager Instance { get; private set; }
 
-    void Awake()
+    public SoundManager Instance = null;
+    
+    private void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+            DontDestroyOnLoad(this.gameObject);
         }
-        else
+        else if (Instance != this)
         {
-            Destroy(gameObject);
+            Destroy(this.gameObject);
         }
     }
 

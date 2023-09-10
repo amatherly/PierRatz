@@ -27,8 +27,7 @@ public class Menu : MonoBehaviour
     
     public void LoadNextScene()
     {
-        int nextSceneToLoad = (2);
+        int nextSceneToLoad = (1);
         LoadingScreenController.LoadScene(nextSceneToLoad);
     }
-
 }

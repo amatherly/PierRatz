@@ -14,22 +14,6 @@ public class PinController : MonoBehaviour
     private Vector3[] originalPositions = new Vector3[10];
     [SerializeField]
     private Pin[] pins;
-    
-    
-    public static PinController Instance { get; private set; }
-
-    private void Awake()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
 
     public void Start()
     {

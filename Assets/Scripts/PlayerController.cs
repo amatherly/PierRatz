@@ -6,12 +6,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private static int SPEED_BOOST_SOUND = 2;
     [SerializeField] private static int THROW_SOUND = 3;
     [SerializeField] private static int JUMP_SOUND = 2;
-
-
+    
     [Header("Movement")] [SerializeField] private float currentSkateSpeed;
     [SerializeField] private float gravity = 9.81f;
     [SerializeField] private float horizontalOffset = 0.38f;
     [SerializeField] private float jumpForce = 10f;
+    [SerializeField] private float speedBoostMultiplier;
     [SerializeField] private Vector3 movement;
     [SerializeField] private float rotationSpeed;
     [SerializeField] private float maxSpeed;
@@ -35,43 +35,21 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Transform leftFoot; // Set these in the editor or find them by name/tag
     [SerializeField] private Transform rightFoot;
     private GameObject skateboardParent;
-
-    [Header("Speed Boost")] [SerializeField]
-    private float speedBoostDuration = 3f; // How long the speed boost lasts
-
-    [SerializeField] private float speedBoostMultiplier;
-    private bool isSpeedBoosted = false;
-    private float speedBoostEndTime;
-
+    
     [Header("Ground Check Settings")] [SerializeField]
     private Transform groundCheck;
 
     [SerializeField] private float groundDistance = 0.4f;
     [SerializeField] private LayerMask groundMask;
 
-
     private bool isSkating = false;
     private bool isGrounded = false;
-
     private bool canMove = true;
     private bool isLevelFinished = false;
     private float inputMagnitude;
     private Vector3 velocity;
     
-    public static PlayerController Instance { get; private set; }
 
-    private void Awake()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
     private void Start()
     {
         animator = GetComponent<Animator>();
@@ -87,11 +65,6 @@ public class PlayerController : MonoBehaviour
         UpdateSkateboardParentPosition();
         AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
         skateboard.SetActive(!stateInfo.IsName("Moving"));
-
-        if (isSpeedBoosted && Time.time >= speedBoostEndTime)
-        {
-            DeactivateSpeedBoost();
-        }
 
         if (canMove)
         {
@@ -171,14 +144,9 @@ public class PlayerController : MonoBehaviour
     public void ActivateSpeedBoost()
     {
         rb.AddForce(transform.forward * speedBoostMultiplier, ForceMode.Impulse);
-        GameManager.GAME.SoundManager.PlaySound(SPEED_BOOST_SOUND);
-        isSpeedBoosted = true;
+       GameManager.GAME.SoundManager.PlaySound(SPEED_BOOST_SOUND);
     }
-
-    private void DeactivateSpeedBoost()
-    {
-        isSpeedBoosted = false;
-    }
+    
 
     public void CarryOn()
     {

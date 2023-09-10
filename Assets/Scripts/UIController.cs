@@ -9,9 +9,22 @@ public class UIController : MonoBehaviour
 {
     [SerializeField] private TMP_Text bankMoney;
 
-    // [SerializeField] private HUD _HUD;
-    
     private AudioSource audioSource;
+
+    private static UIController Instance = null;
+    
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(this.gameObject);
+        }
+        else if (Instance != this)
+        {
+            Destroy(this.gameObject);
+        }
+    }
     
     void Start()
     {

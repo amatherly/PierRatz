@@ -1,4 +1,5 @@
 using System.Collections;
+using Cinemachine;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -15,20 +16,19 @@ public class LevelController : MonoBehaviour
     [SerializeField] private int waitTime = 3;
 
     private int count = 0;
-
-    public static LevelController Instance { get; private set; }
-
+    
+    public static LevelController Instance = null;
+    
     private void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
-   
+            DontDestroyOnLoad(this.gameObject);
         }
-        else
+        else if (Instance != this)
         {
-            Destroy(gameObject);
+            Destroy(this.gameObject);
         }
     }
     
@@ -45,10 +45,10 @@ public class LevelController : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            GameManager.GAME.Camera.Follow = null;
-            GameManager.GAME.Camera.m_Orbits[1].m_Height = 10;
-            GameManager.GAME.Player.IsLevelFinished = true;
-            GameManager.GAME.Player.CarryOn();
+            FindObjectOfType<CinemachineFreeLook>().Follow = null;
+            FindObjectOfType<CinemachineFreeLook>().m_Orbits[1].m_Height = 10;
+            FindObjectOfType<PlayerController>().IsLevelFinished = true;
+            FindObjectOfType<PlayerController>().CarryOn();
             GameManager.GAME.SoundManager.PlaySound(1);
             StartCoroutine(WaitAndCheckPins());
         }
